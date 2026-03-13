@@ -9,7 +9,11 @@ if (!stripeKey) {
 }
 
 const stripe = stripeKey
-  ? new Stripe(stripeKey, { apiVersion: "2026-02-25.clover" })
+  ? new Stripe(stripeKey, {
+      apiVersion: "2026-02-25.clover",
+      maxNetworkRetries: 3,
+      timeout: 30000,
+    })
   : null;
 
 export async function POST(req: NextRequest) {
