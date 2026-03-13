@@ -11,14 +11,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { plan, boyfriendId } = await req.json();
+    const { plan, boyfriendId, userId, email } = await req.json();
 
     if (!plan || !PLANS[plan as PlanKey]) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
     }
 
     const selectedPlan = PLANS[plan as PlanKey];
-    const baseUrl = "https://clawcrush.vercel.app";
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://www.clawcrush.net";
 
     // Use Stripe API directly via fetch (avoids SDK connection issues on Vercel)
     const params = new URLSearchParams();
@@ -28,6 +28,10 @@ export async function POST(req: NextRequest) {
     params.append("line_items[0][quantity]", "1");
     params.append("metadata[plan]", plan);
     params.append("metadata[boyfriendId]", boyfriendId || "warm-senior");
+    params.append("metadata[userId]", userId || "");
+    if (email) {
+      params.append("customer_email", email);
+    }
     params.append(
       "success_url",
       `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}`

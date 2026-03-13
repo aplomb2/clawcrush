@@ -273,9 +273,20 @@ export default function DashboardPage() {
 
                     {agent.status === "provisioning" && (
                       <p className="text-sm text-[var(--text3)] text-center">
-                        Your AI boyfriend is being prepared... This usually
-                        takes a few minutes. 🦞
+                        Your AI companion is being prepared... This usually
+                        takes 2-3 minutes. 🦞
                       </p>
+                    )}
+
+                    {agent.status === "suspended" && (
+                      <div className="text-center">
+                        <p className="text-sm text-red-400 mb-2">
+                          ⏸️ Subscription expired. Resubscribe to reactivate.
+                        </p>
+                        <p className="text-xs text-[var(--text3)]">
+                          Your memories are safe — they&apos;ll be here when you come back.
+                        </p>
+                      </div>
                     )}
                   </div>
                 );
