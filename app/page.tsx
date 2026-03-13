@@ -165,12 +165,12 @@ export default function Home() {
             <a href="#choose" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">
               Meet them
             </a>
-            <a
-              href="#pricing"
+            <Link
+              href="/dashboard"
               className="text-sm font-semibold px-4 py-2 rounded-full gradient-bg text-white hover:opacity-90 transition-opacity"
             >
-              Get Started
-            </a>
+              Dashboard
+            </Link>
           </div>
         </div>
       </nav>
