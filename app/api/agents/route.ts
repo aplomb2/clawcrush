@@ -11,10 +11,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { boyfriendId, plan = "premium" } = await req.json();
+  const { boyfriendId, plan = "premium", telegramBotToken } = await req.json();
 
   if (!boyfriendId) {
     return NextResponse.json({ error: "boyfriendId required" }, { status: 400 });
+  }
+
+  if (!telegramBotToken || !/^\d{8,}:[A-Za-z0-9_-]{30,}$/.test(telegramBotToken.trim())) {
+    return NextResponse.json({ error: "Valid Telegram bot token required" }, { status: 400 });
   }
 
   const isAdmin = ADMIN_EMAILS.includes(user.email);
@@ -59,6 +63,19 @@ export async function POST(req: NextRequest) {
 
   // Create agent record in Firestore
   const agentId = `clawcrush-${user.uid.slice(0, 8)}-${Date.now()}`;
+  // Verify bot token with Telegram API
+  let botUsername = "";
+  try {
+    const tgRes = await fetch(`https://api.telegram.org/bot${telegramBotToken.trim()}/getMe`);
+    const tgData = await tgRes.json();
+    if (!tgData.ok) {
+      return NextResponse.json({ error: "Invalid bot token — Telegram rejected it. Please check and try again." }, { status: 400 });
+    }
+    botUsername = tgData.result.username || "";
+  } catch {
+    return NextResponse.json({ error: "Could not verify bot token with Telegram. Please try again." }, { status: 500 });
+  }
+
   const agentData = {
     agentId,
     userId: user.uid,
@@ -67,7 +84,9 @@ export async function POST(req: NextRequest) {
     boyfriendId,
     plan: bypassPayment ? "vip" : plan,
     status: "provisioning",
-    telegramBotLink: "", // Will be set after provisioning
+    telegramBotToken: telegramBotToken.trim(),
+    telegramBotUsername: botUsername,
+    telegramBotLink: botUsername ? `https://t.me/${botUsername}` : "",
     createdAt: new Date().toISOString(),
     isAdmin,
   };

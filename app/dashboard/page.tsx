@@ -21,6 +21,10 @@ export default function DashboardPage() {
   const [userInfo, setUserInfo] = useState<{ isAdmin: boolean } | null>(null);
   const [error, setError] = useState("");
   const [genderTab, setGenderTab] = useState<"female" | "male">("female");
+  const [showTokenModal, setShowTokenModal] = useState(false);
+  const [selectedPersona, setSelectedPersona] = useState<string>("");
+  const [botToken, setBotToken] = useState("");
+  const [botTokenError, setBotTokenError] = useState("");
 
 
   const fetchUserData = useCallback(async () => {
@@ -41,9 +45,31 @@ export default function DashboardPage() {
     if (user) fetchUserData();
   }, [user, fetchUserData]);
 
-  const createAgent = async (boyfriendId: string) => {
+  const startCreateAgent = (boyfriendId: string) => {
+    setSelectedPersona(boyfriendId);
+    setBotToken("");
+    setBotTokenError("");
+    setShowTokenModal(true);
+  };
+
+  const validateBotToken = (token: string) => {
+    // Telegram bot tokens look like: 123456789:ABCDefGHIjklMNOpqrsTUVwxyz
+    return /^\d{8,}:[A-Za-z0-9_-]{30,}$/.test(token.trim());
+  };
+
+  const createAgent = async () => {
+    if (!botToken.trim()) {
+      setBotTokenError("Please enter your Telegram bot token");
+      return;
+    }
+    if (!validateBotToken(botToken)) {
+      setBotTokenError("Invalid token format. It should look like: 123456789:ABCDefGHIjklMNO...");
+      return;
+    }
+
     setIsCreating(true);
     setError("");
+    setBotTokenError("");
 
     const token = await getIdToken();
     if (!token) return;
@@ -55,19 +81,22 @@ export default function DashboardPage() {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ boyfriendId, plan: "premium" }),
+        body: JSON.stringify({
+          boyfriendId: selectedPersona,
+          plan: "premium",
+          telegramBotToken: botToken.trim(),
+        }),
       });
 
       const data = await res.json();
 
       if (data.requirePayment) {
-        // Redirect to Stripe checkout
         const checkoutRes = await fetch("/api/checkout", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             plan: "premium",
-            boyfriendId,
+            boyfriendId: selectedPersona,
             userId: user?.uid,
             email: user?.email,
           }),
@@ -84,7 +113,7 @@ export default function DashboardPage() {
         return;
       }
 
-      // Success — refresh
+      setShowTokenModal(false);
       await fetchUserData();
     } catch (e) {
       setError("Network error. Please try again.");
@@ -311,7 +340,7 @@ export default function DashboardPage() {
                     {bf.desc}
                   </p>
                   <button
-                    onClick={() => createAgent(bf.id)}
+                    onClick={() => startCreateAgent(bf.id)}
                     disabled={isCreating}
                     className="w-full py-2 rounded-full gradient-bg text-white text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
                   >
@@ -322,6 +351,94 @@ export default function DashboardPage() {
             ))}
           </div>
         </section>
+
+        {/* Telegram Bot Token Modal */}
+        {showTokenModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+            <div className="glass rounded-2xl p-6 max-w-lg w-full relative">
+              <button
+                onClick={() => setShowTokenModal(false)}
+                className="absolute top-4 right-4 text-[var(--text3)] hover:text-white text-xl"
+              >
+                ✕
+              </button>
+
+              <div className="text-center mb-6">
+                <div className="text-4xl mb-2">🤖</div>
+                <h3 className="text-xl font-bold">Set Up Your Telegram Bot</h3>
+                <p className="text-sm text-[var(--text3)] mt-2">
+                  Each companion needs their own Telegram bot. It takes 30 seconds!
+                </p>
+              </div>
+
+              <div className="glass rounded-xl p-4 mb-6">
+                <h4 className="font-bold text-sm mb-3">📋 Quick Setup (3 steps)</h4>
+                <ol className="space-y-2 text-sm text-[var(--text2)]">
+                  <li className="flex gap-2">
+                    <span className="text-pink-400 font-bold shrink-0">1.</span>
+                    <span>
+                      Open Telegram and search for{" "}
+                      <a
+                        href="https://t.me/BotFather"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-pink-400 hover:underline font-semibold"
+                      >
+                        @BotFather
+                      </a>
+                    </span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-pink-400 font-bold shrink-0">2.</span>
+                    <span>
+                      Send <code className="bg-white/10 px-1.5 py-0.5 rounded text-xs">/newbot</code> → give it a name and username
+                    </span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-pink-400 font-bold shrink-0">3.</span>
+                    <span>Copy the <strong>bot token</strong> BotFather gives you and paste it below</span>
+                  </li>
+                </ol>
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-sm font-semibold mb-2">Telegram Bot Token</label>
+                <input
+                  type="text"
+                  value={botToken}
+                  onChange={(e) => { setBotToken(e.target.value); setBotTokenError(""); }}
+                  placeholder="123456789:ABCDefGHIjklMNOpqrsTUVwxyz..."
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-[var(--text3)] focus:outline-none focus:border-pink-500/50 font-mono"
+                />
+                {botTokenError && (
+                  <p className="text-red-400 text-xs mt-1">{botTokenError}</p>
+                )}
+              </div>
+
+              <button
+                onClick={createAgent}
+                disabled={isCreating || !botToken.trim()}
+                className="w-full py-3 rounded-full gradient-bg text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {isCreating ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Creating your companion...
+                  </span>
+                ) : (
+                  `Activate ${personas.find(p => p.id === selectedPersona)?.name || "Companion"} →`
+                )}
+              </button>
+
+              <p className="text-xs text-[var(--text3)] mt-3 text-center">
+                🔒 Your bot token is encrypted and only used to connect your companion.
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
