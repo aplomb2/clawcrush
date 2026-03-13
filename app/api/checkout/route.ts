@@ -2,12 +2,22 @@ import { PLANS, PlanKey } from "@/lib/stripe";
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2026-02-25.clover",
-});
+const stripeKey = process.env.STRIPE_SECRET_KEY;
+
+if (!stripeKey) {
+  console.error("STRIPE_SECRET_KEY is not set!");
+}
+
+const stripe = stripeKey
+  ? new Stripe(stripeKey, { apiVersion: "2026-02-25.clover" })
+  : null;
 
 export async function POST(req: NextRequest) {
   try {
+    if (!stripe) {
+      return NextResponse.json({ error: "Payment system not configured" }, { status: 500 });
+    }
+
     const { plan, boyfriendId } = await req.json();
 
     if (!plan || !PLANS[plan as PlanKey]) {
