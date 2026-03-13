@@ -18,8 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     const selectedPlan = PLANS[plan as PlanKey];
-    const baseUrl =
-      process.env.NEXT_PUBLIC_BASE_URL || "https://clawcrush.vercel.app";
+    const baseUrl = "https://clawcrush.vercel.app";
 
     // Use Stripe API directly via fetch (avoids SDK connection issues on Vercel)
     const params = new URLSearchParams();
