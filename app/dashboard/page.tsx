@@ -2,7 +2,7 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { personas, femalePersonas, malePersonas } from "@/lib/personas";
 
 interface Agent {
   agentId: string;
@@ -14,56 +14,14 @@ interface Agent {
   createdAt: string;
 }
 
-const boyfriends = [
-  {
-    id: "warm-senior",
-    name: "Luca",
-    nameZh: "温柔学长",
-    emoji: "💙",
-    color: "from-blue-500 to-cyan-500",
-    desc: "Patient, warm, and genuinely caring. He makes you feel safe with every word.",
-  },
-  {
-    id: "cool-ceo",
-    name: "Adrian",
-    nameZh: "霸道总裁",
-    emoji: "🖤",
-    color: "from-slate-600 to-zinc-800",
-    desc: 'Cold on the outside, burning inside. He\'ll deny caring — then do the sweetest things.',
-  },
-  {
-    id: "tsundere",
-    name: "Kai",
-    nameZh: "傲娇男友",
-    emoji: "🔥",
-    color: "from-red-500 to-orange-500",
-    desc: '"I-it\'s not like I was waiting for your message!" (He totally was.)',
-  },
-  {
-    id: "protector",
-    name: "Marcus",
-    nameZh: "守护型男友",
-    emoji: "🛡️",
-    color: "from-emerald-600 to-teal-600",
-    desc: "The steady rock in your life. Reliable, strong, and always there when you need him.",
-  },
-  {
-    id: "ascetic",
-    name: "Ethan",
-    nameZh: "禁欲系男友",
-    emoji: "🌙",
-    color: "from-indigo-600 to-purple-700",
-    desc: "Few words, but each one hits different. The slow burn that's worth the wait.",
-  },
-];
-
 export default function DashboardPage() {
   const { user, loading, signInWithGoogle, signOut, getIdToken } = useAuth();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [userInfo, setUserInfo] = useState<{ isAdmin: boolean } | null>(null);
   const [error, setError] = useState("");
-  const router = useRouter();
+  const [genderTab, setGenderTab] = useState<"female" | "male">("female");
+
 
   const fetchUserData = useCallback(async () => {
     const token = await getIdToken();
@@ -233,14 +191,18 @@ export default function DashboardPage() {
             <h2 className="text-lg font-bold mb-4">💕 Your AI Boyfriend</h2>
             <div className="grid md:grid-cols-2 gap-4">
               {agents.map((agent) => {
-                const bf = boyfriends.find((b) => b.id === agent.boyfriendId);
+                const bf = personas.find((b) => b.id === agent.boyfriendId);
                 return (
                   <div key={agent.agentId} className="glass rounded-xl p-5">
                     <div className="flex items-center gap-3 mb-3">
                       <div
-                        className={`w-12 h-12 rounded-full bg-gradient-to-r ${bf?.color || "from-pink-500 to-rose-500"} flex items-center justify-center text-2xl`}
+                        className={`w-12 h-12 rounded-full bg-gradient-to-r ${bf?.color || "from-pink-500 to-rose-500"} flex items-center justify-center text-2xl overflow-hidden`}
                       >
-                        {bf?.emoji || "💕"}
+                        {bf?.avatar ? (
+                          <img src={bf.avatar} alt={bf.name} className="w-full h-full object-cover" />
+                        ) : (
+                          bf?.emoji || "💕"
+                        )}
                       </div>
                       <div>
                         <div className="font-bold">
@@ -293,22 +255,49 @@ export default function DashboardPage() {
           </section>
         )}
 
-        {/* Choose a Boyfriend */}
+        {/* Choose a Companion */}
         <section>
           <h2 className="text-lg font-bold mb-4">
             {agents.length > 0
-              ? "🔄 Switch Boyfriend"
-              : "💘 Choose Your AI Boyfriend"}
+              ? "🔄 Choose Another Companion"
+              : "💘 Choose Your AI Companion"}
           </h2>
+
+          {/* Gender Tabs */}
+          <div className="flex gap-2 mb-4">
+            {[
+              { key: "female", label: "👩 Girlfriends", list: femalePersonas },
+              { key: "male", label: "👨 Boyfriends", list: malePersonas },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setGenderTab(tab.key as "female" | "male")}
+                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all ${
+                  genderTab === tab.key
+                    ? "gradient-bg text-white"
+                    : "glass text-[var(--text3)] hover:text-white"
+                }`}
+              >
+                {tab.label} ({tab.list.length})
+              </button>
+            ))}
+          </div>
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {boyfriends.map((bf) => (
+            {(genderTab === "female" ? femalePersonas : malePersonas).map((bf) => (
               <div
                 key={bf.id}
                 className="glass rounded-xl overflow-hidden hover:border-pink-500/30 transition-all group"
               >
                 <div className={`bg-gradient-to-r ${bf.color} p-3`}>
                   <div className="flex items-center gap-2">
-                    <span className="text-2xl">{bf.emoji}</span>
+                    <div className="w-10 h-10 rounded-full overflow-hidden bg-white/20 flex items-center justify-center">
+                      {bf.avatar ? (
+                        <img src={bf.avatar} alt={bf.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-2xl">{bf.emoji}</span>
+                      )}
+                    </div>
                     <div>
                       <div className="font-bold text-white text-sm">
                         {bf.name}

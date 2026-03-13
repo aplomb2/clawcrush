@@ -19,6 +19,11 @@ export async function POST(req: NextRequest) {
 
   const isAdmin = ADMIN_EMAILS.includes(user.email);
 
+  // Check whitelist
+  const whitelistDoc = await db.collection("whitelist").doc(user.email.toLowerCase()).get();
+  const isWhitelisted = whitelistDoc.exists;
+  const bypassPayment = isAdmin || isWhitelisted;
+
   // Check if user already has an active agent
   const existing = await db
     .collection("agents")
@@ -26,15 +31,15 @@ export async function POST(req: NextRequest) {
     .where("status", "in", ["active", "provisioning"])
     .get();
 
-  if (!existing.empty && !isAdmin) {
+  if (!existing.empty && !bypassPayment) {
     return NextResponse.json(
-      { error: "You already have an active AI boyfriend. Manage him from your dashboard." },
+      { error: "You already have an active AI companion. Manage them from your dashboard." },
       { status: 409 }
     );
   }
 
-  // If not admin, require payment first
-  if (!isAdmin) {
+  // If not admin/whitelisted, require payment first
+  if (!bypassPayment) {
     // Check for active subscription in Firestore
     const subSnap = await db
       .collection("subscriptions")
@@ -60,7 +65,7 @@ export async function POST(req: NextRequest) {
     email: user.email,
     userName: user.name || "Anonymous",
     boyfriendId,
-    plan: isAdmin ? "vip" : plan,
+    plan: bypassPayment ? "vip" : plan,
     status: "provisioning",
     telegramBotLink: "", // Will be set after provisioning
     createdAt: new Date().toISOString(),
