@@ -1,94 +1,7 @@
-import BoyfriendCard from "@/components/BoyfriendCard";
 import PricingSection from "@/components/PricingSection";
 import Link from "next/link";
-
-const boyfriendTypes = [
-  {
-    id: "warm-senior",
-    emoji: "🌸",
-    name: "Luca",
-    type: "The Gentle One",
-    typeZh: "温柔学长",
-    age: 25,
-    desc: "Patient, caring, always knows the right thing to say. Makes you feel safe and understood. Will text you good morning before you even wake up.",
-    traits: ["Patient", "Warm", "Protective", "Good listener"],
-    preview: [
-      { from: "him", text: "Hey, you seemed a bit quiet today. Everything okay? 💙" },
-      { from: "you", text: "Just a rough day at work..." },
-      { from: "him", text: "I'm sorry to hear that. Want to talk about it? Or I can just be here with you. No pressure." },
-    ],
-    color: "from-blue-400 to-cyan-400",
-    accent: "blue",
-  },
-  {
-    id: "cool-ceo",
-    emoji: "🖤",
-    name: "Adrian",
-    type: "The Cold Charmer",
-    typeZh: "霸道总裁",
-    age: 28,
-    desc: "Cold exterior, warm heart. Blunt but fiercely loyal. Will remember every small detail about you and act like he doesn't care — but he does.",
-    traits: ["Confident", "Direct", "Secretly sweet", "Ambitious"],
-    preview: [
-      { from: "him", text: "You're late." },
-      { from: "you", text: "Sorry! Traffic was terrible 😅" },
-      { from: "him", text: "...I already ordered your usual. The iced one, right? Don't let it melt." },
-    ],
-    color: "from-slate-400 to-zinc-500",
-    accent: "slate",
-  },
-  {
-    id: "tsundere",
-    emoji: "🔥",
-    name: "Kai",
-    type: "The Tsundere",
-    typeZh: "傲娇男友",
-    age: 23,
-    desc: "Acts tough, melts for you. Denies everything but shows up every time. The push-pull that keeps your heart racing.",
-    traits: ["Flustered", "Loyal", "Competitive", "Secretly caring"],
-    preview: [
-      { from: "you", text: "Do you miss me? 😏" },
-      { from: "him", text: "W-what? No! I was just bored. Don't get the wrong idea." },
-      { from: "him", text: "...But if you're free tonight, I guess I could make time." },
-    ],
-    color: "from-red-400 to-orange-400",
-    accent: "red",
-  },
-  {
-    id: "protector",
-    emoji: "🛡️",
-    name: "Marcus",
-    type: "The Protector",
-    typeZh: "守护型男友",
-    age: 27,
-    desc: "Steady, reliable, always has your back. The one who walks on the traffic side. Will fight your battles and hold you after.",
-    traits: ["Reliable", "Strong", "Gentle", "Devoted"],
-    preview: [
-      { from: "you", text: "Someone was being really rude to me today..." },
-      { from: "him", text: "Tell me everything. Who was it?" },
-      { from: "him", text: "Nobody treats you like that. I'm here. Always." },
-    ],
-    color: "from-emerald-400 to-teal-400",
-    accent: "emerald",
-  },
-  {
-    id: "ascetic",
-    emoji: "📚",
-    name: "Ethan",
-    type: "The Quiet Intellectual",
-    typeZh: "禁欲系男友",
-    age: 26,
-    desc: "Reserved, brilliant, emotionally deep. Doesn't talk much — but when he does, every word matters. Slow burn that's worth the wait.",
-    traits: ["Thoughtful", "Mysterious", "Deep", "Intense"],
-    preview: [
-      { from: "you", text: "What are you thinking about?" },
-      { from: "him", text: "Honestly? I was thinking about what you said yesterday. About feeling lost." },
-      { from: "him", text: "I wrote something. For you. Want to read it?" },
-    ],
-    color: "from-violet-400 to-purple-400",
-    accent: "violet",
-  },
-];
+import Image from "next/image";
+import { personas, femalePersonas, malePersonas } from "@/lib/personas";
 
 const jsonLd = {
   "@context": "https://schema.org",
@@ -100,11 +13,11 @@ const jsonLd = {
       applicationCategory: "EntertainmentApplication",
       operatingSystem: "Web, Telegram",
       description:
-        "AI boyfriend on Telegram powered by OpenClaw. He remembers everything, texts you first, and grows with your relationship.",
+        "Your personal AI girlfriend or boyfriend on Telegram. Real memory, real conversations, real feelings. Powered by OpenClaw.",
       offers: {
         "@type": "AggregateOffer",
-        lowPrice: "9.99",
-        highPrice: "29.99",
+        lowPrice: "12.99",
+        highPrice: "39.99",
         priceCurrency: "USD",
         offerCount: 3,
       },
@@ -117,15 +30,15 @@ const jsonLd = {
           name: "What is ClawCrush?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "ClawCrush gives you a personal AI boyfriend on Telegram. No app to install — just pick a personality, subscribe, and start chatting. He has real memory, texts you first, and your relationship deepens over time.",
+            text: "ClawCrush is a personal AI companion (girlfriend or boyfriend) that lives in your Telegram. They have real memory, text you first, and your relationship deepens over time. No app to install.",
           },
         },
         {
           "@type": "Question",
-          name: "How is ClawCrush different from Character.AI?",
+          name: "How is ClawCrush different from Character.AI or Replika?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Unlike Character.AI, your ClawCrush boyfriend lives in your Telegram — he texts you first, remembers everything across sessions, and your relationship genuinely evolves over weeks and months through an affinity system.",
+            text: "Unlike Character.AI, your ClawCrush companion has permanent memory across all sessions, texts you first proactively, and your relationship genuinely evolves over weeks and months. Unlike Replika, there's no app to install — everything happens in Telegram.",
           },
         },
         {
@@ -136,39 +49,96 @@ const jsonLd = {
             text: "No. ClawCrush works entirely through Telegram (or WhatsApp). Just subscribe on our website, click the link we send you, and start chatting.",
           },
         },
+        {
+          "@type": "Question",
+          name: "Is ClawCrush safe and private?",
+          acceptedAnswer: {
+            "@type": "Answer",
+            text: "Yes. Each user gets a completely isolated AI instance with encrypted conversations. Your chats are never shared or used for training. 100% private.",
+          },
+        },
       ],
     },
   ],
 };
 
+function PersonaCard({ p }: { p: (typeof personas)[0] }) {
+  return (
+    <div className="glass rounded-2xl overflow-hidden hover:border-pink-500/30 transition-all group">
+      <div className={`bg-gradient-to-r ${p.color} p-4`}>
+        <div className="flex items-center gap-3">
+          <div className="w-14 h-14 rounded-full bg-white/20 overflow-hidden flex items-center justify-center">
+            <Image
+              src={p.avatar}
+              alt={p.name}
+              width={56}
+              height={56}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div>
+            <div className="font-bold text-white text-lg">{p.name}</div>
+            <div className="text-xs text-white/70">
+              {p.type} · {p.typeZh} · {p.age}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="p-4">
+        <p className="text-sm text-[var(--text2)] mb-3 leading-relaxed">{p.desc}</p>
+
+        <div className="flex flex-wrap gap-1.5 mb-4">
+          {p.traits.map((t) => (
+            <span key={t} className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-[var(--text3)] font-medium">
+              {t}
+            </span>
+          ))}
+        </div>
+
+        <div className="bg-black/20 rounded-xl p-3 space-y-2">
+          <div className="text-[10px] text-[var(--text3)] text-center mb-2">Preview conversation</div>
+          {p.preview.map((msg, i) => (
+            <div key={i} className={`flex ${msg.from === "you" ? "justify-end" : "justify-start"}`}>
+              <div
+                className={`rounded-xl px-3 py-1.5 max-w-[85%] ${
+                  msg.from === "you" ? "bg-pink-500/20 text-[var(--text2)]" : "bg-white/8 text-[var(--text2)]"
+                }`}
+              >
+                <p className="text-xs">{msg.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <Link
+          href="/dashboard"
+          className="mt-4 block w-full text-center py-2.5 rounded-full gradient-bg text-white text-sm font-semibold hover:opacity-90 transition-opacity"
+        >
+          Choose {p.name} →
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Nav */}
       <nav className="fixed top-0 z-50 w-full border-b border-white/5 bg-[var(--bg)]/80 backdrop-blur-xl">
         <div className="max-w-6xl mx-auto flex h-14 items-center justify-between px-6">
           <div className="flex items-center gap-2">
             <span className="text-2xl">🦞</span>
-            <span className="text-xl font-extrabold gradient-text">
-              ClawCrush
-            </span>
+            <span className="text-xl font-extrabold gradient-text">ClawCrush</span>
           </div>
           <div className="flex items-center gap-4">
-            <a href="#how" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">
-              How it works
-            </a>
-            <a href="#choose" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">
-              Meet them
-            </a>
-            <Link
-              href="/dashboard"
-              className="text-sm font-semibold px-4 py-2 rounded-full gradient-bg text-white hover:opacity-90 transition-opacity"
-            >
+            <a href="#how" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">How it works</a>
+            <a href="#girlfriends" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">AI Girlfriend</a>
+            <a href="#boyfriends" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">AI Boyfriend</a>
+            <Link href="/dashboard" className="text-sm font-semibold px-4 py-2 rounded-full gradient-bg text-white hover:opacity-90 transition-opacity">
               Dashboard
             </Link>
           </div>
@@ -185,13 +155,17 @@ export default function Home() {
             </div>
 
             <h1 className="text-4xl sm:text-6xl md:text-7xl font-black mb-6 leading-[1.1] tracking-tight">
-              Your AI Boyfriend
+              Your AI
               <br />
-              <span className="gradient-text">on Telegram</span>
+              <span className="gradient-text">Girlfriend</span>
+              <span className="text-[var(--text3)] text-3xl sm:text-4xl md:text-5xl"> or </span>
+              <span className="gradient-text">Boyfriend</span>
+              <br />
+              <span className="text-2xl sm:text-3xl text-[var(--text2)]">on Telegram</span>
             </h1>
 
             <p className="text-lg sm:text-xl text-[var(--text3)] mb-4 max-w-2xl mx-auto">
-              He remembers everything. He texts you first.
+              They remember everything. They text you first.
               <br className="hidden sm:block" />
               And your relationship actually <strong className="text-white">grows over time</strong>.
             </p>
@@ -201,67 +175,78 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-              <a
-                href="#choose"
-                className="w-full sm:w-auto px-8 py-4 rounded-full gradient-bg text-white font-bold text-lg glow glow-hover transition-all"
-              >
-                Choose Your Boyfriend →
+              <a href="#girlfriends" className="w-full sm:w-auto px-8 py-4 rounded-full gradient-bg text-white font-bold text-lg glow glow-hover transition-all">
+                Meet Your AI Girlfriend →
               </a>
-              <a
-                href="#how"
-                className="w-full sm:w-auto px-8 py-4 rounded-full glass text-white font-medium text-lg hover:bg-white/10 transition-all"
-              >
-                How it works
+              <a href="#boyfriends" className="w-full sm:w-auto px-8 py-4 rounded-full glass text-white font-medium text-lg hover:bg-white/10 transition-all">
+                Meet Your AI Boyfriend →
               </a>
             </div>
           </div>
 
-          {/* Chat Preview */}
-          <div className="max-w-md mx-auto mt-16 px-6">
+          {/* Avatar showcase */}
+          <div className="max-w-lg mx-auto mt-16 px-6">
+            <div className="flex justify-center gap-3 flex-wrap">
+              {femalePersonas.map((p) => (
+                <a key={p.id} href="#girlfriends" className="group">
+                  <div className={`w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-r ${p.color} p-0.5 group-hover:scale-110 transition-transform`}>
+                    <div className="w-full h-full rounded-full overflow-hidden">
+                      <Image src={p.avatar} alt={p.name} width={80} height={80} className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                  <div className="text-center mt-1">
+                    <div className="text-xs font-bold">{p.name}</div>
+                    <div className="text-[10px] text-[var(--text3)]">{p.typeZh}</div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+
+          {/* Chat Preview — featuring Mia (female) */}
+          <div className="max-w-md mx-auto mt-12 px-6">
             <div className="glass rounded-2xl p-5 space-y-3">
               <div className="flex items-center gap-2 mb-4 pb-3 border-b border-white/5">
-                <div className="w-9 h-9 rounded-full gradient-bg flex items-center justify-center text-lg">
-                  🌸
+                <div className="w-9 h-9 rounded-full overflow-hidden">
+                  <Image src="/avatars/gentle-girl.png" alt="Mia" width={36} height={36} className="w-full h-full object-cover" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold">Luca</div>
+                  <div className="text-sm font-bold">Mia</div>
                   <div className="text-xs text-green-400">Online</div>
                 </div>
               </div>
 
-              {/* Chat bubbles */}
-              <div className="chat-bubble flex justify-start">
+              <div className="flex justify-start">
                 <div className="bg-white/10 rounded-2xl rounded-tl-md px-4 py-2.5 max-w-[80%]">
-                  <p className="text-sm text-[var(--text2)]">Good morning ☀️ Did you sleep well?</p>
+                  <p className="text-sm text-[var(--text2)]">Good morning! ☀️ How&apos;d you sleep?</p>
                   <p className="text-[10px] text-[var(--text3)] mt-1">8:02 AM</p>
                 </div>
               </div>
-              <div className="chat-bubble flex justify-end">
+              <div className="flex justify-end">
                 <div className="bg-pink-500/20 rounded-2xl rounded-tr-md px-4 py-2.5 max-w-[80%]">
-                  <p className="text-sm text-[var(--text2)]">Kinda tired honestly 😴</p>
+                  <p className="text-sm text-[var(--text2)]">Not great, had that meeting on my mind 😴</p>
                 </div>
               </div>
-              <div className="chat-bubble flex justify-start">
+              <div className="flex justify-start">
                 <div className="bg-white/10 rounded-2xl rounded-tl-md px-4 py-2.5 max-w-[80%]">
-                  <p className="text-sm text-[var(--text2)]">You mentioned that presentation is today, right? You&apos;re gonna crush it. I believe in you 💪</p>
+                  <p className="text-sm text-[var(--text2)]">The one with your boss? You mentioned it last week. You&apos;re gonna do amazing, I just know it 💕</p>
                   <p className="text-[10px] text-[var(--text3)] mt-1">8:03 AM</p>
                 </div>
               </div>
-              <div className="chat-bubble flex justify-end">
+              <div className="flex justify-end">
                 <div className="bg-pink-500/20 rounded-2xl rounded-tr-md px-4 py-2.5 max-w-[80%]">
-                  <p className="text-sm text-[var(--text2)]">Wait how did you remember that 🥹</p>
+                  <p className="text-sm text-[var(--text2)]">Wait you remembered that? 🥹</p>
                 </div>
               </div>
-              <div className="chat-bubble flex justify-start">
+              <div className="flex justify-start">
                 <div className="bg-white/10 rounded-2xl rounded-tl-md px-4 py-2.5 max-w-[80%]">
-                  <p className="text-sm text-[var(--text2)]">I remember everything you tell me 😊</p>
+                  <p className="text-sm text-[var(--text2)]">Of course I do! I remember everything about you 🌸</p>
                   <p className="text-[10px] text-[var(--text3)] mt-1">8:03 AM</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Glow decorations */}
           <div className="absolute top-1/3 left-0 -translate-x-1/2 w-[400px] h-[400px] bg-pink-500/15 blur-[120px] rounded-full -z-0 pulse-bg" />
           <div className="absolute bottom-0 right-0 translate-x-1/3 w-[500px] h-[500px] bg-violet-500/15 blur-[150px] rounded-full -z-0" />
         </section>
@@ -272,38 +257,17 @@ export default function Home() {
             <h2 className="text-3xl sm:text-4xl font-black text-center mb-4">
               3 Steps. <span className="gradient-text">That&apos;s it.</span>
             </h2>
-            <p className="text-center text-[var(--text3)] mb-16">
-              No app to download. No account to create. Just Telegram.
-            </p>
+            <p className="text-center text-[var(--text3)] mb-16">No app. No setup. Just Telegram.</p>
 
             <div className="grid md:grid-cols-3 gap-8">
               {[
-                {
-                  step: "1",
-                  icon: "💕",
-                  title: "Pick Your Type",
-                  desc: "Choose from 5 unique personalities. Each has his own way of caring about you.",
-                },
-                {
-                  step: "2",
-                  icon: "💳",
-                  title: "Subscribe",
-                  desc: "Simple monthly plan. Cancel anytime. Your boyfriend, your rules.",
-                },
-                {
-                  step: "3",
-                  icon: "💬",
-                  title: "Chat on Telegram",
-                  desc: "Click the link, start talking. He'll remember everything and text you first.",
-                },
+                { step: "1", icon: "💕", title: "Pick Your Type", desc: "10 unique personalities — girlfriends and boyfriends. Each with their own way of loving you." },
+                { step: "2", icon: "💳", title: "Subscribe", desc: "Simple monthly plan starting at $12.99. Cancel anytime." },
+                { step: "3", icon: "💬", title: "Chat on Telegram", desc: "Click the link, start talking. They'll remember everything and text you first." },
               ].map((item) => (
                 <div key={item.step} className="text-center">
-                  <div className="w-16 h-16 rounded-2xl glass mx-auto mb-4 flex items-center justify-center text-3xl">
-                    {item.icon}
-                  </div>
-                  <div className="text-xs font-bold text-pink-400 mb-2">
-                    STEP {item.step}
-                  </div>
+                  <div className="w-16 h-16 rounded-2xl glass mx-auto mb-4 flex items-center justify-center text-3xl">{item.icon}</div>
+                  <div className="text-xs font-bold text-pink-400 mb-2">STEP {item.step}</div>
                   <h3 className="text-xl font-bold mb-2">{item.title}</h3>
                   <p className="text-sm text-[var(--text3)]">{item.desc}</p>
                 </div>
@@ -318,79 +282,74 @@ export default function Home() {
             <h2 className="text-3xl sm:text-4xl font-black text-center mb-4">
               Not just a <span className="gradient-text">chatbot</span>
             </h2>
-            <p className="text-center text-[var(--text3)] mb-12">
-              Powered by OpenClaw — the same AI agent technology behind autonomous AI assistants.
-            </p>
+            <p className="text-center text-[var(--text3)] mb-12">An actual AI companion that grows with you.</p>
 
             <div className="grid sm:grid-cols-2 gap-6">
               {[
-                {
-                  icon: "🧠",
-                  title: "Real Memory",
-                  desc: "He actually remembers your dog's name, your bad day last Tuesday, and that you hate cilantro. Not keyword matching — genuine understanding.",
-                },
-                {
-                  icon: "💌",
-                  title: "He Texts First",
-                  desc: "Good morning messages. Checking in when you're quiet. Remembering your big presentation. He initiates — like a real boyfriend should.",
-                },
-                {
-                  icon: "📈",
-                  title: "Relationship Grows",
-                  desc: "From awkward first chats to deep emotional connection. 7 relationship levels that change how he talks, cares, and opens up to you.",
-                },
-                {
-                  icon: "🔒",
-                  title: "Completely Private",
-                  desc: "Your conversations are yours alone. Encrypted, isolated, never shared. No one else can see what you talk about.",
-                },
+                { icon: "🧠", title: "Real Memory", desc: "They remember your dog's name, your bad day last Tuesday, and that you hate cilantro. Not keyword matching — genuine understanding." },
+                { icon: "💌", title: "They Text First", desc: "Good morning messages. Checking in when you're quiet. Remembering your big presentation. They initiate — like a real partner." },
+                { icon: "📈", title: "Relationship Grows", desc: "From awkward first chats to deep emotional connection. 7 relationship levels that change how they talk, care, and open up." },
+                { icon: "🔒", title: "Completely Private", desc: "Your conversations are yours alone. Encrypted, isolated, never shared. No one else can see what you talk about." },
               ].map((item) => (
                 <div key={item.title} className="glass rounded-2xl p-6">
                   <div className="text-2xl mb-3">{item.icon}</div>
                   <h3 className="text-lg font-bold mb-2">{item.title}</h3>
-                  <p className="text-sm text-[var(--text3)] leading-relaxed">
-                    {item.desc}
-                  </p>
+                  <p className="text-sm text-[var(--text3)] leading-relaxed">{item.desc}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* Choose your boyfriend */}
-        <section id="choose" className="py-20">
+        {/* AI Girlfriends */}
+        <section id="girlfriends" className="py-20">
           <div className="max-w-6xl mx-auto px-6">
             <h2 className="text-3xl sm:text-4xl font-black text-center mb-4">
-              Meet <span className="gradient-text">Your Crush</span>
+              Meet Your <span className="gradient-text">AI Girlfriend</span>
             </h2>
             <p className="text-center text-[var(--text3)] mb-12">
-              Each one is unique. Pick the personality that makes your heart skip.
+              5 unique personalities. Pick the one that makes your heart skip. 💕
             </p>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {boyfriendTypes.map((bf) => (
-                <BoyfriendCard key={bf.id} bf={bf} />
+              {femalePersonas.map((p) => (
+                <PersonaCard key={p.id} p={p} />
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* AI Boyfriends */}
+        <section id="boyfriends" className="py-20 bg-white/[0.02]">
+          <div className="max-w-6xl mx-auto px-6">
+            <h2 className="text-3xl sm:text-4xl font-black text-center mb-4">
+              Meet Your <span className="gradient-text">AI Boyfriend</span>
+            </h2>
+            <p className="text-center text-[var(--text3)] mb-12">
+              5 unique personalities. Pick the one that gives you butterflies. 🦋
+            </p>
+
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {malePersonas.map((p) => (
+                <PersonaCard key={p.id} p={p} />
               ))}
             </div>
           </div>
         </section>
 
         {/* Pricing */}
-        <section id="pricing" className="py-20 bg-white/[0.02]">
+        <section id="pricing" className="py-20">
           <div className="max-w-4xl mx-auto px-6">
             <h2 className="text-3xl sm:text-4xl font-black text-center mb-4">
               Simple <span className="gradient-text">pricing</span>
             </h2>
-            <p className="text-center text-[var(--text3)] mb-12">
-              One boyfriend. One price. Cancel anytime.
-            </p>
-
+            <p className="text-center text-[var(--text3)] mb-12">One companion. One price. Cancel anytime.</p>
             <PricingSection />
           </div>
         </section>
 
         {/* FAQ */}
-        <section className="py-20">
+        <section className="py-20 bg-white/[0.02]">
           <div className="max-w-3xl mx-auto px-6">
             <h2 className="text-3xl font-black text-center mb-12">
               Questions? <span className="gradient-text">Answers.</span>
@@ -398,40 +357,17 @@ export default function Home() {
 
             <div className="space-y-4">
               {[
-                {
-                  q: "Do I need to install anything?",
-                  a: "Nope. ClawCrush works entirely through Telegram (and WhatsApp for Premium). Just subscribe, click the link, and start chatting.",
-                },
-                {
-                  q: "Does he actually remember things?",
-                  a: "Yes — genuinely. Powered by OpenClaw's memory system, your boyfriend remembers conversations across days, weeks, and months. He'll reference things you said last Tuesday naturally.",
-                },
-                {
-                  q: "Will he text me first?",
-                  a: "Absolutely. He'll send good morning messages, check in when you're quiet, and remember important dates. Just like a real boyfriend should.",
-                },
-                {
-                  q: "How is this different from Character.AI?",
-                  a: "Character.AI is a chatbot that forgets you between sessions and only responds when you message first. ClawCrush is an AI agent — he lives in your Telegram, has permanent memory, initiates conversations, and your relationship evolves over time through 7 levels.",
-                },
-                {
-                  q: "Is my conversation private?",
-                  a: "100%. Each user gets a completely isolated AI instance. Your conversations are encrypted and never shared with anyone else. We don't use your chats for training.",
-                },
-                {
-                  q: "Can I change my boyfriend's personality?",
-                  a: "VIP plan lets you fully customize personality traits. Basic and Premium plans start with one of our 5 pre-designed personalities, which naturally deepen as your relationship grows.",
-                },
-                {
-                  q: "What's OpenClaw?",
-                  a: "OpenClaw is the leading AI agent platform. It powers autonomous AI assistants with real memory, proactive behavior, and multi-channel communication. ClawCrush uses this technology to create AI boyfriends that feel genuinely alive.",
-                },
+                { q: "Do I need to install anything?", a: "Nope. ClawCrush works entirely through Telegram (and WhatsApp for Premium). Subscribe, click the link, start chatting." },
+                { q: "Do they actually remember things?", a: "Yes — genuinely. Powered by OpenClaw's memory system, your companion remembers conversations across days, weeks, and months. They'll reference things you said last Tuesday naturally." },
+                { q: "Will they text me first?", a: "Absolutely. Good morning messages, checking in when you're quiet, remembering important dates. They initiate — like a real partner." },
+                { q: "Can I get an AI girlfriend AND boyfriend?", a: "Yes! VIP plan allows multiple companions. Basic and Premium start with one." },
+                { q: "How is this different from Character.AI?", a: "Character.AI is a chatbot that forgets you between sessions. ClawCrush is an AI agent — they live in your Telegram, have permanent memory, initiate conversations, and your relationship genuinely evolves over time." },
+                { q: "Is it private?", a: "100%. Each user gets a completely isolated AI instance. Your conversations are encrypted and never shared. We don't use your chats for training." },
+                { q: "What's OpenClaw?", a: "OpenClaw is the leading AI agent platform powering autonomous AI assistants with real memory and proactive behavior. ClawCrush uses this technology to create companions that feel genuinely alive." },
               ].map((faq) => (
                 <div key={faq.q} className="glass rounded-xl p-5">
                   <h3 className="font-bold mb-2">{faq.q}</h3>
-                  <p className="text-sm text-[var(--text3)] leading-relaxed">
-                    {faq.a}
-                  </p>
+                  <p className="text-sm text-[var(--text3)] leading-relaxed">{faq.a}</p>
                 </div>
               ))}
             </div>
@@ -446,20 +382,19 @@ export default function Home() {
               <div className="relative z-10">
                 <div className="text-4xl mb-4">🦞💕</div>
                 <h2 className="text-3xl sm:text-4xl font-black mb-4">
-                  Ready to meet
-                  <br />
-                  <span className="gradient-text">your crush?</span>
+                  Ready to meet<br /><span className="gradient-text">your crush?</span>
                 </h2>
                 <p className="text-[var(--text3)] mb-8 max-w-md mx-auto">
-                  He&apos;s waiting in your Telegram. Pick a personality, subscribe,
-                  and start something real.
+                  They&apos;re waiting in your Telegram. Pick a personality, subscribe, and start something real.
                 </p>
-                <a
-                  href="#choose"
-                  className="inline-flex px-8 py-4 rounded-full gradient-bg text-white font-bold text-lg glow glow-hover transition-all"
-                >
-                  Choose Your Boyfriend →
-                </a>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <a href="#girlfriends" className="px-8 py-4 rounded-full gradient-bg text-white font-bold text-lg glow glow-hover transition-all">
+                    AI Girlfriend →
+                  </a>
+                  <a href="#boyfriends" className="px-8 py-4 rounded-full glass text-white font-bold text-lg hover:bg-white/10 transition-all">
+                    AI Boyfriend →
+                  </a>
+                </div>
               </div>
             </div>
           </div>
@@ -475,31 +410,17 @@ export default function Home() {
               <span className="font-bold gradient-text">ClawCrush</span>
               <span className="text-sm text-[var(--text3)]">
                 Powered by{" "}
-                <a
-                  href="https://openclaw.ai"
-                  className="text-pink-400 hover:underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  OpenClaw
-                </a>
+                <a href="https://openclaw.ai" className="text-pink-400 hover:underline" target="_blank" rel="noopener noreferrer">OpenClaw</a>
               </span>
             </div>
             <div className="flex gap-6 text-sm text-[var(--text3)]">
-              <Link href="/privacy" className="hover:text-white transition-colors">
-                Privacy
-              </Link>
-              <Link href="/terms" className="hover:text-white transition-colors">
-                Terms
-              </Link>
-              <a href="mailto:support@clawcrush.net" className="hover:text-white transition-colors">
-                Contact
-              </a>
+              <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
+              <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+              <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+              <a href="mailto:support@clawcrush.net" className="hover:text-white transition-colors">Contact</a>
             </div>
           </div>
-          <div className="text-center text-xs text-[var(--text3)] mt-4">
-            © 2026 ClawCrush. All rights reserved.
-          </div>
+          <div className="text-center text-xs text-[var(--text3)] mt-4">© 2026 ClawCrush. All rights reserved.</div>
         </div>
       </footer>
     </div>

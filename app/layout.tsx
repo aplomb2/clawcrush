@@ -11,20 +11,25 @@ const inter = Inter({
 export const metadata: Metadata = {
   metadataBase: new URL("https://www.clawcrush.net"),
   title: {
-    default: "ClawCrush — Your AI Boyfriend on Telegram | Powered by OpenClaw",
+    default: "ClawCrush — AI Girlfriend & Boyfriend on Telegram | Powered by OpenClaw",
     template: "%s | ClawCrush",
   },
   description:
-    "Get your own AI boyfriend on Telegram. He remembers everything, texts you first, and his personality grows with your relationship. No app install — just chat. Powered by OpenClaw.",
+    "Your personal AI girlfriend or boyfriend on Telegram. Real memory, real conversations — they text you first and your relationship grows over time. 10 unique personalities. No app install. Powered by OpenClaw.",
   keywords: [
+    "AI girlfriend",
+    "AI girlfriend app",
     "AI boyfriend",
     "AI boyfriend app",
     "AI companion Telegram",
+    "virtual girlfriend",
     "virtual boyfriend",
-    "AI chat boyfriend",
+    "AI chat companion",
     "OpenClaw AI",
     "AI relationship",
+    "Telegram AI girlfriend",
     "Telegram AI boyfriend",
+    "AI companion app",
   ],
   alternates: {
     canonical: "https://www.clawcrush.net",
@@ -32,16 +37,16 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     url: "https://www.clawcrush.net",
-    title: "ClawCrush — Your AI Boyfriend on Telegram",
+    title: "ClawCrush — AI Girlfriend & Boyfriend on Telegram",
     description:
-      "He remembers everything, texts you first, and grows with you. No app install — just Telegram.",
+      "Your personal AI girlfriend or boyfriend on Telegram. Real memory, they text you first, relationship grows over time.",
     siteName: "ClawCrush",
   },
   twitter: {
     card: "summary_large_image",
-    title: "ClawCrush — Your AI Boyfriend on Telegram",
+    title: "ClawCrush — AI Girlfriend & Boyfriend on Telegram",
     description:
-      "He remembers everything, texts you first, and grows with you. Powered by OpenClaw 🦞",
+      "Your personal AI companion on Telegram. Real memory, they text first, relationship grows. 10 unique personalities 🦞",
   },
   robots: {
     index: true,
