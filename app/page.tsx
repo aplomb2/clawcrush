@@ -136,8 +136,9 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-4">
             <a href="#how" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">How it works</a>
-            <a href="#girlfriends" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">AI Girlfriend</a>
-            <a href="#boyfriends" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">AI Boyfriend</a>
+            <Link href="/ai-girlfriend" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">AI Girlfriend</Link>
+            <Link href="/ai-boyfriend" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">AI Boyfriend</Link>
+            <Link href="/blog" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">Blog</Link>
             <Link href="/dashboard" className="text-sm font-semibold px-4 py-2 rounded-full gradient-bg text-white hover:opacity-90 transition-opacity">
               Get Started
             </Link>
@@ -305,10 +306,11 @@ export default function Home() {
         <section id="girlfriends" className="py-20">
           <div className="max-w-6xl mx-auto px-6">
             <h2 className="text-3xl sm:text-4xl font-black text-center mb-4">
-              Meet Your <span className="gradient-text">AI Girlfriend</span>
+              Meet Your <Link href="/ai-girlfriend" className="gradient-text hover:underline">AI Girlfriend</Link>
             </h2>
             <p className="text-center text-[var(--text3)] mb-12">
-              5 unique personalities. Pick the one that makes your heart skip. 💕
+              5 unique personalities. Pick the one that makes your heart skip. 💕{" "}
+              <Link href="/ai-girlfriend" className="text-pink-400 hover:underline text-sm">See full comparison →</Link>
             </p>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -323,10 +325,11 @@ export default function Home() {
         <section id="boyfriends" className="py-20 bg-white/[0.02]">
           <div className="max-w-6xl mx-auto px-6">
             <h2 className="text-3xl sm:text-4xl font-black text-center mb-4">
-              Meet Your <span className="gradient-text">AI Boyfriend</span>
+              Meet Your <Link href="/ai-boyfriend" className="gradient-text hover:underline">AI Boyfriend</Link>
             </h2>
             <p className="text-center text-[var(--text3)] mb-12">
-              5 unique personalities. Pick the one that gives you butterflies. 🦋
+              5 unique personalities. Pick the one that gives you butterflies. 🦋{" "}
+              <Link href="/ai-boyfriend" className="text-pink-400 hover:underline text-sm">See full comparison →</Link>
             </p>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -374,8 +377,73 @@ export default function Home() {
           </div>
         </section>
 
-        {/* CTA */}
+        {/* Blog / Guides */}
         <section className="py-20">
+          <div className="max-w-5xl mx-auto px-6">
+            <h2 className="text-3xl sm:text-4xl font-black text-center mb-4">
+              Guides & <span className="gradient-text">Deep Dives</span>
+            </h2>
+            <p className="text-center text-[var(--text3)] mb-12">
+              Everything you need to know about AI companions.
+            </p>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[
+                {
+                  title: "Best AI Girlfriend Apps in 2026",
+                  desc: "Complete comparison of ClawCrush, Character.AI, Replika, Candy AI, and more.",
+                  href: "/blog/best-ai-girlfriend-apps-2026",
+                  tag: "Guide",
+                },
+                {
+                  title: "ClawCrush vs Character.AI",
+                  desc: "Memory, proactive messaging, privacy — a detailed head-to-head.",
+                  href: "/blog/ai-girlfriend-vs-character-ai",
+                  tag: "Comparison",
+                },
+                {
+                  title: "How AI Companion Memory Works",
+                  desc: "Why ClawCrush never forgets you. Deep dive into OpenClaw's memory system.",
+                  href: "/blog/ai-companion-memory-explained",
+                  tag: "Technology",
+                },
+                {
+                  title: "Best AI Boyfriend Apps Guide",
+                  desc: "5 unique personalities, real memory, daily texts. Complete guide.",
+                  href: "/blog/ai-boyfriend-apps-guide",
+                  tag: "Guide",
+                },
+                {
+                  title: "Why Telegram for AI Companions",
+                  desc: "Zero install, real notifications, privacy by default.",
+                  href: "/blog/telegram-ai-companion-guide",
+                  tag: "Platform",
+                },
+                {
+                  title: "Privacy & Safety Guide",
+                  desc: "How ClawCrush keeps your conversations completely private.",
+                  href: "/blog/ai-relationship-privacy-safety",
+                  tag: "Safety",
+                },
+              ].map((post) => (
+                <Link key={post.href} href={post.href} className="glass rounded-xl p-5 hover:border-pink-500/30 transition-all block">
+                  <div className="text-[10px] font-bold text-pink-400 mb-2">{post.tag}</div>
+                  <h3 className="font-bold text-sm mb-2 group-hover:text-pink-400">{post.title}</h3>
+                  <p className="text-xs text-[var(--text3)] leading-relaxed">{post.desc}</p>
+                </Link>
+              ))}
+            </div>
+
+            <div className="text-center mt-8">
+              <Link href="/blog" className="text-sm text-pink-400 hover:underline">
+                View all articles →
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section className="py-20 bg-white/[0.02]">
           <div className="max-w-3xl mx-auto px-6 text-center">
             <div className="glass rounded-3xl p-12 relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 via-transparent to-violet-500/10 -z-0" />
@@ -402,25 +470,49 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 py-8">
+      <footer className="border-t border-white/5 py-12">
         <div className="max-w-6xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-lg">🦞</span>
-              <span className="font-bold gradient-text">ClawCrush</span>
-              <span className="text-sm text-[var(--text3)]">
-                Powered by{" "}
-                <a href="https://openclaw.ai" className="text-pink-400 hover:underline" target="_blank" rel="noopener noreferrer">OpenClaw</a>
-              </span>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-lg">🦞</span>
+                <span className="font-bold gradient-text">ClawCrush</span>
+              </div>
+              <p className="text-xs text-[var(--text3)] leading-relaxed">
+                Your personal AI girlfriend or boyfriend on Telegram. Powered by{" "}
+                <a href="https://openclaw.ai" className="text-pink-400 hover:underline" target="_blank" rel="noopener noreferrer">OpenClaw</a>.
+              </p>
             </div>
-            <div className="flex gap-6 text-sm text-[var(--text3)]">
-              <Link href="/dashboard" className="hover:text-white transition-colors">Dashboard</Link>
-              <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-              <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-              <a href="mailto:support@clawcrush.net" className="hover:text-white transition-colors">Contact</a>
+            <div>
+              <h4 className="font-bold text-sm mb-3">Product</h4>
+              <div className="space-y-2 text-sm text-[var(--text3)]">
+                <Link href="/ai-girlfriend" className="block hover:text-white transition-colors">AI Girlfriend</Link>
+                <Link href="/ai-boyfriend" className="block hover:text-white transition-colors">AI Boyfriend</Link>
+                <Link href="/dashboard" className="block hover:text-white transition-colors">Dashboard</Link>
+                <a href="#pricing" className="block hover:text-white transition-colors">Pricing</a>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-bold text-sm mb-3">Resources</h4>
+              <div className="space-y-2 text-sm text-[var(--text3)]">
+                <Link href="/blog" className="block hover:text-white transition-colors">Blog</Link>
+                <Link href="/blog/best-ai-girlfriend-apps-2026" className="block hover:text-white transition-colors">Best AI Girlfriend Apps</Link>
+                <Link href="/blog/ai-girlfriend-vs-character-ai" className="block hover:text-white transition-colors">ClawCrush vs Character.AI</Link>
+                <Link href="/blog/ai-companion-memory-explained" className="block hover:text-white transition-colors">How AI Memory Works</Link>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-bold text-sm mb-3">Company</h4>
+              <div className="space-y-2 text-sm text-[var(--text3)]">
+                <Link href="/privacy" className="block hover:text-white transition-colors">Privacy Policy</Link>
+                <Link href="/terms" className="block hover:text-white transition-colors">Terms of Service</Link>
+                <a href="mailto:support@clawcrush.net" className="block hover:text-white transition-colors">Contact Us</a>
+              </div>
             </div>
           </div>
-          <div className="text-center text-xs text-[var(--text3)] mt-4">© 2026 ClawCrush. All rights reserved.</div>
+          <div className="border-t border-white/5 pt-6 text-center text-xs text-[var(--text3)]">
+            © 2026 ClawCrush. All rights reserved.
+          </div>
         </div>
       </footer>
     </div>
