@@ -139,7 +139,7 @@ export default function Home() {
             <a href="#girlfriends" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">AI Girlfriend</a>
             <a href="#boyfriends" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">AI Boyfriend</a>
             <Link href="/dashboard" className="text-sm font-semibold px-4 py-2 rounded-full gradient-bg text-white hover:opacity-90 transition-opacity">
-              Dashboard
+              Get Started
             </Link>
           </div>
         </div>
