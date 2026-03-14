@@ -52,6 +52,37 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: true });
     }
 
+    case "image_style_set": {
+      const style = data.style;
+      if (!style || !["anime", "realistic"].includes(style)) {
+        return NextResponse.json({ error: "Invalid style" }, { status: 400 });
+      }
+      await db.collection("agents").doc(agentId).update({
+        imageStyle: style,
+      });
+      return NextResponse.json({ success: true });
+    }
+
+    case "image_used": {
+      const agentDoc = await db.collection("agents").doc(agentId).get();
+      if (!agentDoc.exists) {
+        return NextResponse.json({ error: "Agent not found" }, { status: 404 });
+      }
+      const current = agentDoc.data()?.imageUsed ?? 0;
+      await db.collection("agents").doc(agentId).update({
+        imageUsed: current + 1,
+      });
+      return NextResponse.json({ success: true });
+    }
+
+    case "character_locked": {
+      await db.collection("agents").doc(agentId).update({
+        characterLocked: true,
+        characterLockedAt: new Date().toISOString(),
+      });
+      return NextResponse.json({ success: true });
+    }
+
     default:
       return NextResponse.json({ error: `Unknown type: ${type}` }, { status: 400 });
   }

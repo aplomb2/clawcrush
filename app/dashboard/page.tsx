@@ -12,6 +12,10 @@ interface Agent {
   status: string;
   telegramBotLink: string;
   createdAt: string;
+  imageEnabled?: boolean;
+  imageStyle?: string | null;
+  imageQuota?: number;
+  imageUsed?: number;
 }
 
 export default function DashboardPage() {
@@ -258,6 +262,19 @@ export default function DashboardPage() {
                               : agent.status}
                         </span>
                       </div>
+                    </div>
+
+                    {/* Image feature status */}
+                    <div className="text-sm text-[var(--text3)] mb-3">
+                      {agent.imageEnabled ? (
+                        agent.imageStyle ? (
+                          <span>📸 Images: {agent.imageUsed ?? 0}/{agent.imageQuota ?? 0} used</span>
+                        ) : (
+                          <span>📸 Start chatting to set up your character&apos;s look!</span>
+                        )
+                      ) : (
+                        <span>📸 Images: Not available (upgrade to Premium)</span>
+                      )}
                     </div>
 
                     {agent.status === "active" && agent.telegramBotLink && (

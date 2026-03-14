@@ -76,19 +76,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Could not verify bot token with Telegram. Please try again." }, { status: 500 });
   }
 
+  const effectivePlan = bypassPayment ? "vip" : plan;
+  const imageQuotaByPlan: Record<string, number> = { basic: 0, premium: 30, vip: 100 };
+  const imageQuota = imageQuotaByPlan[effectivePlan] ?? 0;
+
   const agentData = {
     agentId,
     userId: user.uid,
     email: user.email,
     userName: user.name || "Anonymous",
     boyfriendId,
-    plan: bypassPayment ? "vip" : plan,
+    plan: effectivePlan,
     status: "provisioning",
     telegramBotToken: telegramBotToken.trim(),
     telegramBotUsername: botUsername,
     telegramBotLink: botUsername ? `https://t.me/${botUsername}` : "",
     createdAt: new Date().toISOString(),
     isAdmin,
+    imageEnabled: imageQuota > 0,
+    imageStyle: null,
+    imageQuota,
+    imageUsed: 0,
   };
 
   await db.collection("agents").doc(agentId).set(agentData);
