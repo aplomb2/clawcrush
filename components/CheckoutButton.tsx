@@ -20,10 +20,16 @@ export default function CheckoutButton({
   const handleCheckout = async () => {
     setLoading(true);
     try {
+      // Ad attribution
+      const gclid = typeof window !== 'undefined' ? localStorage.getItem('gclid') : null;
+      const utmSource = typeof window !== 'undefined' ? localStorage.getItem('utm_source') : null;
+      const utmCampaign = typeof window !== 'undefined' ? localStorage.getItem('utm_campaign') : null;
+      const utmTerm = typeof window !== 'undefined' ? localStorage.getItem('utm_term') : null;
+
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan, boyfriendId }),
+        body: JSON.stringify({ plan, boyfriendId, gclid: gclid || undefined, utmSource: utmSource || undefined, utmCampaign: utmCampaign || undefined, utmTerm: utmTerm || undefined }),
       });
 
       const data = await res.json();

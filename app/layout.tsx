@@ -61,6 +61,33 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* GA4 + gclid tracking for ad ROAS attribution */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-CLAWCRUSH01"></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+              gtag('config', 'G-CLAWCRUSH01');
+
+              (function() {
+                var params = new URLSearchParams(window.location.search);
+                var gclid = params.get('gclid');
+                if (gclid) {
+                  document.cookie = '_gcl_aw=' + gclid + ';max-age=' + (90*86400) + ';path=/;SameSite=Lax';
+                  try { localStorage.setItem('gclid', gclid); localStorage.setItem('gclid_ts', Date.now()); } catch(e) {}
+                }
+                ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'].forEach(function(p) {
+                  var v = params.get(p);
+                  if (v) try { localStorage.setItem(p, v); } catch(e) {}
+                });
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className={inter.className}>
         <AuthProvider>{children}</AuthProvider>
       </body>

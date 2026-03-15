@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { plan, boyfriendId, userId, email } = await req.json();
+    const { plan, boyfriendId, userId, email, gclid, utmSource, utmCampaign, utmTerm } = await req.json();
 
     if (!plan || !PLANS[plan as PlanKey]) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });
@@ -29,6 +29,10 @@ export async function POST(req: NextRequest) {
     params.append("metadata[plan]", plan);
     params.append("metadata[boyfriendId]", boyfriendId || "warm-senior");
     params.append("metadata[userId]", userId || "");
+    if (gclid) params.append("metadata[gclid]", gclid);
+    if (utmSource) params.append("metadata[utm_source]", utmSource);
+    if (utmCampaign) params.append("metadata[utm_campaign]", utmCampaign);
+    if (utmTerm) params.append("metadata[utm_term]", utmTerm);
     if (email) {
       params.append("customer_email", email);
     }
