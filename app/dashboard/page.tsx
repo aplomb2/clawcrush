@@ -1,7 +1,13 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
+
+declare global {
+  interface Window {
+    gtag?: (...args: unknown[]) => void;
+  }
+}
 import { personas, femalePersonas, malePersonas } from "@/lib/personas";
 
 interface Agent {
@@ -45,8 +51,20 @@ export default function DashboardPage() {
     }
   }, [getIdToken]);
 
+  const trackedSignUp = useRef(false);
+
   useEffect(() => {
-    if (user) fetchUserData();
+    if (user) {
+      fetchUserData();
+      // Track sign-up / sign-in as conversion (fire once per session)
+      if (!trackedSignUp.current) {
+        trackedSignUp.current = true;
+        window.gtag?.("event", "sign_up", {
+          event_category: "conversion",
+          method: "google",
+        });
+      }
+    }
   }, [user, fetchUserData]);
 
   const startCreateAgent = (boyfriendId: string) => {
@@ -107,6 +125,13 @@ export default function DashboardPage() {
         });
         const checkoutData = await checkoutRes.json();
         if (checkoutData.url) {
+          // Track checkout initiation
+          window.gtag?.("event", "begin_checkout", {
+            event_category: "conversion",
+            event_label: selectedPersona,
+            value: 24.99,
+            currency: "USD",
+          });
           window.location.href = checkoutData.url;
         }
         return;
@@ -118,6 +143,13 @@ export default function DashboardPage() {
       }
 
       setShowTokenModal(false);
+      // Track agent creation as primary conversion
+      window.gtag?.("event", "agent_created", {
+        event_category: "conversion",
+        event_label: selectedPersona,
+        value: 24.99,
+        currency: "USD",
+      });
       await fetchUserData();
     } catch (e) {
       setError("Network error. Please try again.");

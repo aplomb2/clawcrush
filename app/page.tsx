@@ -1,4 +1,5 @@
 import PricingSection from "@/components/PricingSection";
+import TrackClick from "@/components/TrackClick";
 import Link from "next/link";
 import Image from "next/image";
 import { personas, femalePersonas, malePersonas } from "@/lib/personas";
@@ -125,6 +126,7 @@ function PersonaCard({ p }: { p: (typeof personas)[0] }) {
 export default function Home() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
+      <TrackClick />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* Nav */}
