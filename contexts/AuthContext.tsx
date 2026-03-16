@@ -33,12 +33,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
+      // Track login event for returning users (session restore)
+      if (user && typeof window !== 'undefined' && (window as any).gtag) {
+        (window as any).gtag('event', 'login', {
+          method: 'firebase_auto',
+          user_id: user.uid,
+        });
+      }
     });
     return () => unsubscribe();
   }, []);
 
   const signInWithGoogle = async () => {
-    await signInWithPopup(auth, googleProvider);
+    const result = await signInWithPopup(auth, googleProvider);
+    // Track sign_in event in GA4 for Google Ads conversion
+    if (typeof window !== 'undefined' && (window as any).gtag && result.user) {
+      (window as any).gtag('event', 'sign_in', {
+        method: 'google',
+        user_id: result.user.uid,
+      });
+    }
   };
 
   const signOut = async () => {
