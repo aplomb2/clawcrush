@@ -1,6 +1,24 @@
+'use client';
+
+import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from "next/link";
 
 export default function PaymentSuccess() {
+  const searchParams = useSearchParams();
+  const sessionId = searchParams.get('session_id');
+
+  useEffect(() => {
+    // Track purchase conversion in GA4
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', 'purchase', {
+        event_category: 'conversion',
+        transaction_id: sessionId || 'unknown',
+        currency: 'USD',
+      });
+    }
+  }, [sessionId]);
+
   return (
     <div className="min-h-screen bg-[var(--bg)] flex items-center justify-center px-6">
       <div className="max-w-md w-full text-center">
