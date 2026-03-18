@@ -2,6 +2,7 @@
 // Updates agent status in Firestore based on provisioning results
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
+import { FieldValue } from "firebase-admin/firestore";
 
 export async function POST(req: NextRequest) {
   // Verify webhook secret
@@ -12,6 +13,10 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
   const { type, agentId, data } = body;
+
+  if (!agentId) {
+    return NextResponse.json({ error: "agentId required" }, { status: 400 });
+  }
 
   switch (type) {
     case "agent.provisioned": {
@@ -64,14 +69,27 @@ export async function POST(req: NextRequest) {
     }
 
     case "image_used": {
+      // Auto-reset quota if month has changed
       const agentDoc = await db.collection("agents").doc(agentId).get();
       if (!agentDoc.exists) {
         return NextResponse.json({ error: "Agent not found" }, { status: 404 });
       }
-      const current = agentDoc.data()?.imageUsed ?? 0;
-      await db.collection("agents").doc(agentId).update({
-        imageUsed: current + 1,
-      });
+      const agentData = agentDoc.data()!;
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+      const lastResetMonth = agentData.imageQuotaResetMonth || "";
+
+      if (currentMonth !== lastResetMonth) {
+        // New month — reset counter then increment
+        await db.collection("agents").doc(agentId).update({
+          imageUsed: 1,
+          imageQuotaResetMonth: currentMonth,
+        });
+      } else {
+        await db.collection("agents").doc(agentId).update({
+          imageUsed: FieldValue.increment(1),
+        });
+      }
       return NextResponse.json({ success: true });
     }
 

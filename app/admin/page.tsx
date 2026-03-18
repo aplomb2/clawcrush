@@ -23,8 +23,6 @@ interface AgentEntry {
   telegramBotLink: string;
 }
 
-const ADMIN_EMAILS = ["simple.shen@gmail.com"];
-
 export default function AdminPage() {
   const { user, loading, signInWithGoogle, getIdToken } = useAuth();
   const [whitelist, setWhitelist] = useState<WhitelistEntry[]>([]);
@@ -33,8 +31,7 @@ export default function AdminPage() {
   const [newNote, setNewNote] = useState("");
   const [message, setMessage] = useState("");
   const [activeTab, setActiveTab] = useState<"whitelist" | "agents">("whitelist");
-
-  const isAdmin = user?.email && ADMIN_EMAILS.includes(user.email);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const fetchData = useCallback(async () => {
     const token = await getIdToken();
@@ -55,9 +52,36 @@ export default function AdminPage() {
     }
   }, [getIdToken]);
 
+  // Check admin status from server, then fetch admin data
   useEffect(() => {
-    if (user && isAdmin) fetchData();
-  }, [user, isAdmin, fetchData]);
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      const token = await getIdToken();
+      if (!token || cancelled) return;
+      const userRes = await fetch("/api/user", { headers: { Authorization: `Bearer ${token}` } });
+      if (cancelled) return;
+      if (!userRes.ok) return;
+      const userData = await userRes.json();
+      if (!userData.user?.isAdmin) return;
+      setIsAdmin(true);
+
+      const [wlRes, agRes] = await Promise.all([
+        fetch("/api/admin/whitelist", { headers: { Authorization: `Bearer ${token}` } }),
+        fetch("/api/admin/agents", { headers: { Authorization: `Bearer ${token}` } }),
+      ]);
+      if (cancelled) return;
+      if (wlRes.ok) {
+        const data = await wlRes.json();
+        setWhitelist(data.whitelist);
+      }
+      if (agRes.ok) {
+        const data = await agRes.json();
+        setAgents(data.agents);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user, getIdToken]);
 
   const addToWhitelist = async () => {
     if (!newEmail.trim()) return;

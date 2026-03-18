@@ -1,31 +1,23 @@
 // Shared types
-
-export interface Boyfriend {
-  id: string;
-  name: string;
-  nameZh: string;
-  type: string;
-  typeZh: string;
-  age: number;
-  emoji: string;
-  color: string; // gradient class
-  desc: string;
-  traits: string[];
-  preview: { from: "you" | "him"; text: string }[];
-}
+// Note: Persona interface is defined in lib/personas.ts (single source of truth)
 
 export interface UserAgent {
   agentId: string;
   userId: string;
   email: string;
   boyfriendId: string;
-  boyfriendName: string;
   plan: "basic" | "premium" | "vip";
-  status: "active" | "provisioning" | "suspended" | "cancelled";
+  status: "active" | "provisioning" | "suspended" | "cancelled" | "error";
+  telegramBotToken: string;
+  telegramBotUsername: string;
   telegramBotLink: string;
   createdAt: string;
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string;
+  isAdmin: boolean;
+  imageEnabled: boolean;
+  imageStyle: "anime" | "realistic" | null;
+  imageQuota: number;
+  imageUsed: number;
+  characterLocked?: boolean;
 }
 
 export type AgentCommand =

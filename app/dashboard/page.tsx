@@ -2,6 +2,8 @@
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState, useCallback, useRef } from "react";
+import Link from "next/link";
+import Image from "next/image";
 
 declare global {
   interface Window {
@@ -115,12 +117,13 @@ export default function DashboardPage() {
       if (data.requirePayment) {
         const checkoutRes = await fetch("/api/checkout", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
           body: JSON.stringify({
             plan: "premium",
             boyfriendId: selectedPersona,
-            userId: user?.uid,
-            email: user?.email,
           }),
         });
         const checkoutData = await checkoutRes.json();
@@ -194,9 +197,9 @@ export default function DashboardPage() {
             Sign in with Google
           </button>
           <p className="text-xs text-[var(--text3)] mt-4">
-            <a href="/" className="hover:text-pink-400 transition-colors">
+            <Link href="/" className="hover:text-pink-400 transition-colors">
               ← Back to home
-            </a>
+            </Link>
           </p>
         </div>
       </div>
@@ -229,12 +232,12 @@ export default function DashboardPage() {
             </p>
           </div>
           <div className="flex items-center gap-3">
-            <a
+            <Link
               href="/"
               className="text-sm text-[var(--text3)] hover:text-white transition-colors"
             >
               Home
-            </a>
+            </Link>
             <button
               onClick={signOut}
               className="text-sm text-[var(--text3)] hover:text-pink-400 transition-colors"
@@ -264,7 +267,7 @@ export default function DashboardPage() {
                         className={`w-12 h-12 rounded-full bg-gradient-to-r ${bf?.color || "from-pink-500 to-rose-500"} flex items-center justify-center text-2xl overflow-hidden`}
                       >
                         {bf?.avatar ? (
-                          <img src={bf.avatar} alt={bf.name} className="w-full h-full object-cover" />
+                          <Image src={bf.avatar} alt={bf.name} width={48} height={48} className="w-full h-full object-cover" />
                         ) : (
                           bf?.emoji || "💕"
                         )}
@@ -382,7 +385,7 @@ export default function DashboardPage() {
                   <div className="flex items-center gap-2">
                     <div className="w-10 h-10 rounded-full overflow-hidden bg-white/20 flex items-center justify-center">
                       {bf.avatar ? (
-                        <img src={bf.avatar} alt={bf.name} className="w-full h-full object-cover" />
+                        <Image src={bf.avatar} alt={bf.name} width={40} height={40} className="w-full h-full object-cover" />
                       ) : (
                         <span className="text-2xl">{bf.emoji}</span>
                       )}

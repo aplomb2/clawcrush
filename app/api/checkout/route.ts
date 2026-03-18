@@ -1,8 +1,14 @@
 import { PLANS, PlanKey } from "@/lib/stripe";
+import { verifyAuth } from "@/lib/auth";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
   try {
+    const user = await verifyAuth(req);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const stripeKey = process.env.STRIPE_SECRET_KEY;
     if (!stripeKey) {
       return NextResponse.json(
@@ -11,7 +17,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { plan, boyfriendId, userId, email, gclid, utmSource, utmCampaign, utmTerm } = await req.json();
+    const { plan, boyfriendId, gclid, utmSource, utmCampaign, utmTerm } = await req.json();
+    const userId = user.uid;
+    const email = user.email;
 
     if (!plan || !PLANS[plan as PlanKey]) {
       return NextResponse.json({ error: "Invalid plan" }, { status: 400 });

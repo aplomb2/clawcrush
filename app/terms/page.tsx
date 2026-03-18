@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Terms of Service - ClawCrush",
@@ -66,7 +67,7 @@ export default function TermsPage() {
         </div>
 
         <div className="mt-12 text-center">
-          <a href="/" className="text-sm text-pink-400 hover:underline">← Back to home</a>
+          <Link href="/" className="text-sm text-pink-400 hover:underline">← Back to home</Link>
         </div>
       </div>
     </div>

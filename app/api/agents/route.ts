@@ -61,6 +61,21 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Check if bot token is already in use by another agent
+  const tokenInUse = await db
+    .collection("agents")
+    .where("telegramBotToken", "==", telegramBotToken.trim())
+    .where("status", "in", ["active", "provisioning"])
+    .limit(1)
+    .get();
+
+  if (!tokenInUse.empty) {
+    return NextResponse.json(
+      { error: "This bot token is already in use by another companion." },
+      { status: 409 }
+    );
+  }
+
   // Create agent record in Firestore
   const agentId = `clawcrush-${user.uid.slice(0, 8)}-${Date.now()}`;
   // Verify bot token with Telegram API
@@ -122,9 +137,11 @@ export async function POST(req: NextRequest) {
     // Don't fail the request — Angela can pick up from Firestore
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { telegramBotToken: _token, ...safeAgentData } = agentData;
   return NextResponse.json({
     success: true,
-    agent: agentData,
+    agent: safeAgentData,
     message: "Your AI boyfriend is being prepared! You'll receive a Telegram link shortly.",
   });
 }
@@ -142,10 +159,11 @@ export async function GET(req: NextRequest) {
     .orderBy("createdAt", "desc")
     .get();
 
-  const agents = agentsSnap.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  const agents = agentsSnap.docs.map((doc) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { telegramBotToken, ...safe } = doc.data();
+    return { id: doc.id, ...safe };
+  });
 
   return NextResponse.json({ agents });
 }

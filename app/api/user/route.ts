@@ -15,10 +15,11 @@ export async function GET(req: NextRequest) {
     .where("userId", "==", user.uid)
     .get();
 
-  const agents = agentsSnap.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  }));
+  const agents = agentsSnap.docs.map((doc) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { telegramBotToken, ...safe } = doc.data();
+    return { id: doc.id, ...safe };
+  });
 
   return NextResponse.json({
     user: {

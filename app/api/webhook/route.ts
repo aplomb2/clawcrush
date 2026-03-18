@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
 
-const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY!;
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
 
 // Verify Stripe webhook signature manually (no SDK dependency issues)
@@ -47,13 +46,15 @@ export async function POST(req: NextRequest) {
   const body = await req.text();
   const sig = req.headers.get("stripe-signature") || "";
 
-  // Verify signature if webhook secret is configured
-  if (WEBHOOK_SECRET) {
-    const valid = await verifyStripeSignature(body, sig, WEBHOOK_SECRET);
-    if (!valid) {
-      console.error("Webhook signature verification failed");
-      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
-    }
+  // Verify Stripe signature — reject if secret is not configured
+  if (!WEBHOOK_SECRET) {
+    console.error("STRIPE_WEBHOOK_SECRET not configured — rejecting webhook");
+    return NextResponse.json({ error: "Webhook not configured" }, { status: 500 });
+  }
+  const valid = await verifyStripeSignature(body, sig, WEBHOOK_SECRET);
+  if (!valid) {
+    console.error("Webhook signature verification failed");
+    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
   const event = JSON.parse(body);
@@ -63,7 +64,6 @@ export async function POST(req: NextRequest) {
     case "checkout.session.completed": {
       const session = event.data.object;
       const customerEmail = session.customer_details?.email;
-      const customerId = session.customer;
       const subscriptionId = session.subscription;
       const metadata = session.metadata || {};
 
@@ -71,20 +71,23 @@ export async function POST(req: NextRequest) {
 
       // Store subscription record
       if (subscriptionId) {
-        // Find user by email
-        const usersSnap = await db
-          .collection("agents")
-          .where("email", "==", customerEmail)
-          .where("status", "==", "provisioning")
-          .limit(1)
-          .get();
+        // Prefer userId from metadata (set at checkout), fall back to email lookup
+        let userId = metadata.userId || "";
+        if (!userId) {
+          const agentSnap = await db
+            .collection("agents")
+            .where("email", "==", customerEmail)
+            .where("status", "==", "provisioning")
+            .limit(1)
+            .get();
+          userId = agentSnap.empty ? "" : agentSnap.docs[0].data().userId;
+        }
 
-        const userId = usersSnap.empty ? null : usersSnap.docs[0].data().userId;
-
+        const customerId = session.customer;
         await db.collection("subscriptions").doc(subscriptionId).set({
           subscriptionId,
           customerId,
-          userId: userId || metadata.userId || "",
+          userId,
           email: customerEmail,
           plan: metadata.plan || "premium",
           boyfriendId: metadata.boyfriendId || "",
@@ -101,7 +104,6 @@ export async function POST(req: NextRequest) {
     case "customer.subscription.deleted": {
       const subscription = event.data.object;
       const subscriptionId = subscription.id;
-      const customerId = subscription.customer;
 
       console.log(`❌ Subscription cancelled: ${subscriptionId}`);
 
@@ -139,7 +141,6 @@ export async function POST(req: NextRequest) {
 
     case "invoice.payment_failed": {
       const invoice = event.data.object;
-      const customerId = invoice.customer;
       const subscriptionId = invoice.subscription;
       const attemptCount = invoice.attempt_count || 1;
 
