@@ -10,13 +10,11 @@ function PaymentSuccessContent() {
 
   useEffect(() => {
     // Track purchase conversion in GA4
-    if (typeof window !== 'undefined' && (window as any).gtag) {
-      (window as any).gtag('event', 'purchase', {
-        event_category: 'conversion',
-        transaction_id: sessionId || 'unknown',
-        currency: 'USD',
-      });
-    }
+    window.gtag?.('event', 'purchase', {
+      event_category: 'conversion',
+      transaction_id: sessionId || 'unknown',
+      currency: 'USD',
+    });
   }, [sessionId]);
 
   return (
