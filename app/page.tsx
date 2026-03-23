@@ -1,5 +1,6 @@
 import PricingSection from "@/components/PricingSection";
 import TrackClick from "@/components/TrackClick";
+import MobileNav from "@/components/MobileNav";
 import Link from "next/link";
 import Image from "next/image";
 import { personas, femalePersonas, malePersonas } from "@/lib/personas";
@@ -137,13 +138,14 @@ export default function Home() {
             <span className="text-xl font-extrabold gradient-text">ClawCrush</span>
           </div>
           <div className="flex items-center gap-4">
-            <a href="#how" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">How it works</a>
-            <Link href="/ai-girlfriend" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">AI Girlfriend</Link>
-            <Link href="/ai-boyfriend" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">AI Boyfriend</Link>
-            <Link href="/blog" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block">Blog</Link>
-            <Link href="/dashboard" className="text-sm font-semibold px-4 py-2 rounded-full gradient-bg text-white hover:opacity-90 transition-opacity">
+            <a href="#how" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block min-h-[44px] leading-[44px]">How it works</a>
+            <Link href="/ai-girlfriend" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block min-h-[44px] leading-[44px]">AI Girlfriend</Link>
+            <Link href="/ai-boyfriend" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block min-h-[44px] leading-[44px]">AI Boyfriend</Link>
+            <Link href="/blog" className="text-sm text-[var(--text3)] hover:text-white transition-colors hidden sm:block min-h-[44px] leading-[44px]">Blog</Link>
+            <Link href="/dashboard" className="text-sm font-semibold px-4 py-2 rounded-full gradient-bg text-white hover:opacity-90 transition-opacity hidden sm:block min-h-[44px] leading-[44px]">
               Get Started
             </Link>
+            <MobileNav />
           </div>
         </div>
       </nav>
