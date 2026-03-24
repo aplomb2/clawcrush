@@ -26,6 +26,21 @@ interface Agent {
   imageUsed?: number;
 }
 
+interface SubscriptionInfo {
+  id: string;
+  plan: string;
+  status: string;
+  email: string;
+  createdAt: string;
+  stripe?: {
+    status: string;
+    currentPeriodEnd: number;
+    cancelAtPeriodEnd: boolean;
+    trialEnd: number | null;
+    items?: Array<{ amount: number; currency: string; interval: string }>;
+  } | null;
+}
+
 export default function DashboardPage() {
   const { user, loading, signInWithGoogle, signOut, getIdToken } = useAuth();
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -37,6 +52,8 @@ export default function DashboardPage() {
   const [selectedPersona, setSelectedPersona] = useState<string>("");
   const [botToken, setBotToken] = useState("");
   const [botTokenError, setBotTokenError] = useState("");
+  const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
+  const [loadingPortal, setLoadingPortal] = useState(false);
 
 
   const fetchUserData = useCallback(async () => {
@@ -51,7 +68,42 @@ export default function DashboardPage() {
       setUserInfo(data.user);
       setAgents(data.agents);
     }
+
+    // Fetch subscription info
+    const subRes = await fetch("/api/subscription", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (subRes.ok) {
+      const subData = await subRes.json();
+      setSubscription(subData.subscription);
+    }
   }, [getIdToken]);
+
+  const openBillingPortal = async () => {
+    setLoadingPortal(true);
+    try {
+      const token = await getIdToken();
+      if (!token) return;
+
+      const res = await fetch("/api/billing-portal", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.gtag?.("event", "open_billing_portal", {
+          event_category: "subscription",
+        });
+        window.location.href = data.url;
+      } else {
+        setError(data.error || "Failed to open billing portal");
+      }
+    } catch {
+      setError("Network error. Please try again.");
+    } finally {
+      setLoadingPortal(false);
+    }
+  };
 
   const trackedSignUp = useRef(false);
 
@@ -343,6 +395,90 @@ export default function DashboardPage() {
                   </div>
                 );
               })}
+            </div>
+          </section>
+        )}
+
+        {/* Subscription Management */}
+        {subscription && (
+          <section className="mb-10">
+            <h2 className="text-lg font-bold mb-4">💳 Subscription</h2>
+            <div className="glass rounded-xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-lg">
+                      {subscription.plan?.toUpperCase() || "PREMIUM"} Plan
+                    </span>
+                    <span
+                      className={`text-xs px-2 py-1 rounded-full ${
+                        subscription.stripe?.status === "active"
+                          ? "bg-green-500/20 text-green-400"
+                          : subscription.stripe?.status === "trialing"
+                            ? "bg-blue-500/20 text-blue-400"
+                            : subscription.stripe?.status === "past_due"
+                              ? "bg-yellow-500/20 text-yellow-400"
+                              : "bg-red-500/20 text-red-400"
+                      }`}
+                    >
+                      {subscription.stripe?.status === "active"
+                        ? "✅ Active"
+                        : subscription.stripe?.status === "trialing"
+                          ? "🆓 Trial"
+                          : subscription.stripe?.status === "past_due"
+                            ? "⚠️ Past Due"
+                            : subscription.stripe?.status || subscription.status}
+                    </span>
+                  </div>
+                  {subscription.stripe?.items?.[0] && (
+                    <p className="text-sm text-[var(--text3)] mt-1">
+                      ${(subscription.stripe.items[0].amount / 100).toFixed(2)}{" "}
+                      / {subscription.stripe.items[0].interval}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                {subscription.stripe?.trialEnd && (
+                  <div>
+                    <p className="text-[var(--text3)]">Trial ends</p>
+                    <p className="font-semibold">
+                      {new Date(subscription.stripe.trialEnd * 1000).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+                {subscription.stripe?.currentPeriodEnd && (
+                  <div>
+                    <p className="text-[var(--text3)]">
+                      {subscription.stripe.cancelAtPeriodEnd ? "Expires on" : "Next billing"}
+                    </p>
+                    <p className="font-semibold">
+                      {new Date(subscription.stripe.currentPeriodEnd * 1000).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-[var(--text3)]">Subscribed since</p>
+                  <p className="font-semibold">
+                    {new Date(subscription.createdAt).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+
+              {subscription.stripe?.cancelAtPeriodEnd && (
+                <div className="mb-4 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-sm">
+                  ⚠️ Your subscription is set to cancel at the end of the current period.
+                </div>
+              )}
+
+              <button
+                onClick={openBillingPortal}
+                disabled={loadingPortal}
+                className="w-full py-2.5 rounded-full border border-white/10 text-sm font-semibold hover:bg-white/5 transition-all disabled:opacity-50"
+              >
+                {loadingPortal ? "Opening..." : "⚙️ Manage Subscription"}
+              </button>
             </div>
           </section>
         )}

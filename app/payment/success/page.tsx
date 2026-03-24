@@ -188,6 +188,11 @@ function AwakeningContent() {
                           setTokenError(data.error || '提交失败，请重试');
                         } else {
                           setShowBotSetup(false);
+                          // GA4: bot token submitted
+                          window.gtag?.('event', 'bot_token_submitted', {
+                            event_category: 'conversion',
+                            event_label: agentStatus.persona || 'unknown',
+                          });
                           // Continue polling - provision watcher will pick it up
                         }
                       } catch {
@@ -220,6 +225,12 @@ function AwakeningContent() {
                 href={`https://t.me/${agentStatus.botUsername}`}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => {
+                  window.gtag?.('event', 'open_telegram_chat', {
+                    event_category: 'conversion',
+                    event_label: agentStatus.persona || 'unknown',
+                  });
+                }}
                 className="inline-block w-full sm:w-auto px-10 py-4 rounded-full gradient-bg text-white font-bold text-lg glow glow-hover transition-all"
               >
                 打开 Telegram 开始聊天 💬
