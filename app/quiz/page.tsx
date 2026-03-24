@@ -310,7 +310,6 @@ function ResultCard({ persona, percent, rank }: { persona: Persona; percent: num
             window.gtag?.('event', 'quiz_choose_persona', {
               event_category: 'conversion',
               event_label: persona.id,
-              value: index + 1,
             });
           }}
           className="block w-full text-center py-3 rounded-full gradient-bg text-white text-sm font-semibold hover:opacity-90 transition-opacity"
