@@ -187,6 +187,13 @@ export default function Home() {
                 Meet Your AI Boyfriend →
               </a>
             </div>
+
+            <Link
+              href="/quiz"
+              className="inline-flex items-center gap-2 mt-6 px-6 py-3 rounded-full border border-pink-500/20 bg-pink-500/10 text-pink-400 font-semibold hover:bg-pink-500/20 transition-all text-sm"
+            >
+              🔮 测测谁是你的灵魂伴侣
+            </Link>
           </div>
 
           {/* Avatar showcase */}
