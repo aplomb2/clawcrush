@@ -21,8 +21,11 @@ const awakeningTexts: Record<string, string> = {
 interface AgentStatus {
   status: 'provisioning' | 'active' | 'error';
   botUsername: string | null;
+  botLink: string | null;
   characterName: string | null;
   persona: string | null;
+  needsBotToken: boolean;
+  agentId: string | null;
 }
 
 function AwakeningContent() {
@@ -33,11 +36,18 @@ function AwakeningContent() {
   const [agentStatus, setAgentStatus] = useState<AgentStatus>({
     status: 'provisioning',
     botUsername: null,
+    botLink: null,
     characterName: null,
     persona: null,
+    needsBotToken: false,
+    agentId: null,
   });
   const [step, setStep] = useState(0); // 0, 1, 2
   const [ready, setReady] = useState(false);
+  const [showBotSetup, setShowBotSetup] = useState(false);
+  const [botToken, setBotToken] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [tokenError, setTokenError] = useState('');
 
   const personaId = characterParam || agentStatus.persona;
   const persona = personas.find((p) => p.id === personaId);
@@ -53,6 +63,9 @@ function AwakeningContent() {
         setAgentStatus(data);
         if (data.status === 'active') {
           setReady(true);
+        }
+        if (data.needsBotToken && step >= 2) {
+          setShowBotSetup(true);
         }
       }
     } catch {
@@ -135,9 +148,62 @@ function AwakeningContent() {
                 icon="💕"
                 label="调整情感频率..."
                 done={ready}
-                active={step >= 2 && !ready}
+                active={step >= 2 && !ready && !showBotSetup}
               />
             </div>
+
+            {/* Bot Token Setup */}
+            {showBotSetup && !ready && (
+              <div className="glass rounded-2xl p-6 mt-6 text-left animate-fade-in">
+                <h3 className="font-bold mb-2">🤖 最后一步：连接 Telegram</h3>
+                <p className="text-xs text-[var(--text3)] mb-4">
+                  在 Telegram 搜索 <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" className="text-pink-400">@BotFather</a>，发送 /newbot 创建一个机器人，然后把 token 粘贴到下面：
+                </p>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    value={botToken}
+                    onChange={(e) => { setBotToken(e.target.value); setTokenError(''); }}
+                    placeholder="粘贴 Bot Token (例: 123456:ABC-DEF...)"
+                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-sm focus:outline-none focus:border-pink-400 transition-colors"
+                  />
+                  {tokenError && <p className="text-red-400 text-xs">{tokenError}</p>}
+                  <button
+                    onClick={async () => {
+                      if (!botToken.trim() || !agentStatus.agentId) return;
+                      if (!/^\d{8,}:[A-Za-z0-9_-]{30,}$/.test(botToken.trim())) {
+                        setTokenError('Token 格式不对，请检查后重试');
+                        return;
+                      }
+                      setSubmitting(true);
+                      setTokenError('');
+                      try {
+                        const res = await fetch('/api/agents/bot-token', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ agentId: agentStatus.agentId, botToken: botToken.trim() }),
+                        });
+                        const data = await res.json();
+                        if (!res.ok) {
+                          setTokenError(data.error || '提交失败，请重试');
+                        } else {
+                          setShowBotSetup(false);
+                          // Continue polling - provision watcher will pick it up
+                        }
+                      } catch {
+                        setTokenError('网络错误，请重试');
+                      } finally {
+                        setSubmitting(false);
+                      }
+                    }}
+                    disabled={submitting || !botToken.trim()}
+                    className="w-full py-3 rounded-xl gradient-bg text-white font-bold text-sm disabled:opacity-50 transition-opacity"
+                  >
+                    {submitting ? '验证中...' : '连接机器人 🚀'}
+                  </button>
+                </div>
+              </div>
+            )}
           </>
         ) : (
           <div className="animate-fade-in">

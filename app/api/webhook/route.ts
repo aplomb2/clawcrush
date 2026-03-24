@@ -66,24 +66,15 @@ export async function POST(req: NextRequest) {
       const customerEmail = session.customer_details?.email;
       const subscriptionId = session.subscription;
       const metadata = session.metadata || {};
+      const stripeSessionId = session.id;
 
       console.log(`🎉 Checkout completed: ${customerEmail}, plan: ${metadata.plan}`);
 
+      const userId = metadata.userId || "";
+      const customerId = session.customer;
+
       // Store subscription record
       if (subscriptionId) {
-        // Prefer userId from metadata (set at checkout), fall back to email lookup
-        let userId = metadata.userId || "";
-        if (!userId) {
-          const agentSnap = await db
-            .collection("agents")
-            .where("email", "==", customerEmail)
-            .where("status", "==", "provisioning")
-            .limit(1)
-            .get();
-          userId = agentSnap.empty ? "" : agentSnap.docs[0].data().userId;
-        }
-
-        const customerId = session.customer;
         await db.collection("subscriptions").doc(subscriptionId).set({
           subscriptionId,
           customerId,
@@ -94,8 +85,50 @@ export async function POST(req: NextRequest) {
           status: "active",
           createdAt: new Date().toISOString(),
         });
-
         console.log(`✅ Subscription ${subscriptionId} stored`);
+      }
+
+      // Auto-create agent if user doesn't already have one provisioning/active
+      const existingAgent = await db
+        .collection("agents")
+        .where("userId", "==", userId)
+        .where("status", "in", ["active", "provisioning"])
+        .limit(1)
+        .get();
+
+      if (existingAgent.empty && userId) {
+        const boyfriendId = metadata.boyfriendId || "warm-senior";
+        const plan = metadata.plan || "premium";
+        const agentId = `clawcrush-${userId.slice(0, 8)}-${Date.now()}`;
+
+        const agentData = {
+          agentId,
+          userId,
+          email: customerEmail || "",
+          userName: session.customer_details?.name || "Anonymous",
+          boyfriendId,
+          plan,
+          status: "provisioning",
+          stripeSessionId,
+          subscriptionId: subscriptionId || "",
+          telegramBotToken: "",
+          telegramBotUsername: "",
+          telegramBotLink: "",
+          createdAt: new Date().toISOString(),
+          needsBotToken: true,
+          imageEnabled: plan !== "basic",
+          imageStyle: null,
+          imageQuota: plan === "vip" ? 100 : plan === "premium" ? 30 : 0,
+          imageUsed: 0,
+        };
+
+        await db.collection("agents").doc(agentId).set(agentData);
+        console.log(`🤖 Agent ${agentId} auto-created for ${customerEmail} (${boyfriendId})`);
+      } else if (!existingAgent.empty) {
+        // Link existing provisioning agent to this stripe session
+        const existingDoc = existingAgent.docs[0];
+        await existingDoc.ref.update({ stripeSessionId });
+        console.log(`🔗 Linked stripe session to existing agent ${existingDoc.id}`);
       }
 
       break;
