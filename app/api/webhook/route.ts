@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
+import { PLANS } from "@/lib/stripe";
 
 const WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET || "";
+
+const IMAGE_QUOTA: Record<string, number> = { basic: 0, premium: 30, vip: 100 };
+
+// Resolve plan key from a Stripe price ID
+function planFromPriceId(priceId: string): string | null {
+  for (const [key, plan] of Object.entries(PLANS)) {
+    if (plan.priceId === priceId) return key;
+  }
+  return null;
+}
 
 // Verify Stripe webhook signature manually (no SDK dependency issues)
 async function verifyStripeSignature(
@@ -164,8 +175,9 @@ export async function POST(req: NextRequest) {
             status: "suspended",
             suspendedAt: new Date().toISOString(),
             suspendReason: "subscription_cancelled",
+            imageEnabled: false,
           });
-          console.log(`⏸️ Agent ${doc.id} suspended`);
+          console.log(`⏸️ Agent ${doc.id} suspended + images disabled`);
         }
       }
 
@@ -220,33 +232,51 @@ export async function POST(req: NextRequest) {
       const subscriptionId = subscription.id;
       const status = subscription.status;
 
-      console.log(`🔄 Subscription updated: ${subscriptionId} → ${status}`);
+      // Detect current plan from Stripe subscription items
+      const priceId = subscription.items?.data?.[0]?.price?.id;
+      const newPlan = priceId ? planFromPriceId(priceId) : null;
+
+      console.log(`🔄 Subscription updated: ${subscriptionId} → ${status}${newPlan ? ` (plan: ${newPlan})` : ""}`);
 
       const subDoc = db.collection("subscriptions").doc(subscriptionId);
       const subSnap = await subDoc.get();
 
       if (subSnap.exists) {
-        await subDoc.update({
+        const subUpdate: Record<string, unknown> = {
           status: status === "active" ? "active" : status,
           updatedAt: new Date().toISOString(),
-        });
+        };
+        if (newPlan) subUpdate.plan = newPlan;
+        await subDoc.update(subUpdate);
 
-        // If reactivated, unsuspend agents
-        if (status === "active") {
-          const subData = subSnap.data()!;
-          const agentsSnap = await db
-            .collection("agents")
-            .where("userId", "==", subData.userId)
-            .where("status", "==", "suspended")
-            .get();
+        const subData = subSnap.data()!;
+        const effectivePlan = newPlan || subData.plan || "premium";
+        const imageQuota = IMAGE_QUOTA[effectivePlan] ?? 0;
 
-          for (const doc of agentsSnap.docs) {
-            await doc.ref.update({
-              status: "active",
-              reactivatedAt: new Date().toISOString(),
-            });
-            console.log(`▶️ Agent ${doc.id} reactivated`);
+        // Sync plan & image quota to all active/suspended agents for this user
+        const agentsSnap = await db
+          .collection("agents")
+          .where("userId", "==", subData.userId)
+          .where("status", "in", ["active", "suspended", "provisioning"])
+          .get();
+
+        for (const doc of agentsSnap.docs) {
+          const agentUpdate: Record<string, unknown> = {
+            plan: effectivePlan,
+            imageEnabled: imageQuota > 0,
+            imageQuota,
+          };
+
+          // If reactivated, unsuspend agents
+          if (status === "active" && doc.data().status === "suspended") {
+            agentUpdate.status = "active";
+            agentUpdate.reactivatedAt = new Date().toISOString();
+            console.log(`▶️ Agent ${doc.id} reactivated → ${effectivePlan}`);
+          } else {
+            console.log(`📝 Agent ${doc.id} plan synced → ${effectivePlan} (images: ${imageQuota})`);
           }
+
+          await doc.ref.update(agentUpdate);
         }
       }
 

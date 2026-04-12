@@ -11,6 +11,9 @@ declare global {
   }
 }
 import { personas, femalePersonas, malePersonas } from "@/lib/personas";
+import { PLANS, PlanKey } from "@/lib/stripe";
+
+const PLAN_IMAGE_QUOTA: Record<string, number> = { basic: 0, premium: 30, vip: 100 };
 
 interface Agent {
   agentId: string;
@@ -52,6 +55,7 @@ export default function DashboardPage() {
   const [selectedPersona, setSelectedPersona] = useState<string>("");
   const [botToken, setBotToken] = useState("");
   const [botTokenError, setBotTokenError] = useState("");
+  const [selectedPlan, setSelectedPlan] = useState<PlanKey>("premium");
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
 
@@ -123,6 +127,7 @@ export default function DashboardPage() {
 
   const startCreateAgent = (boyfriendId: string) => {
     setSelectedPersona(boyfriendId);
+    setSelectedPlan("premium");
     setBotToken("");
     setBotTokenError("");
     setShowTokenModal(true);
@@ -159,7 +164,7 @@ export default function DashboardPage() {
         },
         body: JSON.stringify({
           boyfriendId: selectedPersona,
-          plan: "premium",
+          plan: selectedPlan,
           telegramBotToken: botToken.trim(),
         }),
       });
@@ -174,7 +179,7 @@ export default function DashboardPage() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            plan: "premium",
+            plan: selectedPlan,
             boyfriendId: selectedPersona,
           }),
         });
@@ -184,7 +189,7 @@ export default function DashboardPage() {
           window.gtag?.("event", "begin_checkout", {
             event_category: "conversion",
             event_label: selectedPersona,
-            value: 24.99,
+            value: PLANS[selectedPlan].price,
             currency: "USD",
           });
           window.location.href = checkoutData.url;
@@ -202,7 +207,7 @@ export default function DashboardPage() {
       window.gtag?.("event", "agent_created", {
         event_category: "conversion",
         event_label: selectedPersona,
-        value: 24.99,
+        value: PLANS[selectedPlan].price,
         currency: "USD",
       });
       await fetchUserData();
@@ -598,6 +603,39 @@ export default function DashboardPage() {
                     <span>Copy the <strong>bot token</strong> BotFather gives you and paste it below</span>
                   </li>
                 </ol>
+              </div>
+
+              {/* Plan Selector */}
+              <div className="mb-4">
+                <label className="block text-sm font-semibold mb-2">Choose Your Plan</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(Object.keys(PLANS) as PlanKey[]).map((key) => {
+                    const plan = PLANS[key];
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => setSelectedPlan(key)}
+                        className={`relative rounded-xl p-3 text-center transition-all border ${
+                          selectedPlan === key
+                            ? "border-pink-500 bg-pink-500/10"
+                            : "border-white/10 bg-white/5 hover:border-white/20"
+                        }`}
+                      >
+                        {key === "premium" && (
+                          <span className="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] px-1.5 py-0.5 rounded-full gradient-bg text-white font-bold">
+                            POPULAR
+                          </span>
+                        )}
+                        <div className="text-xs text-[var(--text3)] uppercase font-bold">{plan.name}</div>
+                        <div className="text-lg font-black">${plan.price}</div>
+                        <div className="text-[10px] text-[var(--text3)]">/month</div>
+                        <div className="text-[10px] text-[var(--text3)] mt-1">
+                          {PLAN_IMAGE_QUOTA[key] > 0 ? `${PLAN_IMAGE_QUOTA[key]} images/mo` : "Chat only"}
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               <div className="mb-4">
