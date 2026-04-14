@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
     const character = boyfriendId || "warm-senior";
     params.append(
       "success_url",
-      `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&character=${encodeURIComponent(character)}`
+      `${baseUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&character=${encodeURIComponent(character)}&plan=${encodeURIComponent(plan)}`
     );
     params.append("cancel_url", `${baseUrl}/payment/cancel`);
     params.append("allow_promotion_codes", "true");

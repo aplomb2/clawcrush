@@ -1,12 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-
-declare global {
-  interface Window {
-    gtag?: (...args: unknown[]) => void;
-  }
-}
+import { trackCtaClick } from "@/lib/tracking";
 
 /**
  * Tracks CTA clicks on the page by listening for clicks on links to /dashboard
@@ -24,11 +19,7 @@ export default function TrackClick() {
 
       // Track CTA clicks (Choose persona / Get Started / Subscribe)
       if (href.includes("/dashboard") || text.includes("Subscribe")) {
-        window.gtag?.("event", "cta_click", {
-          event_category: "conversion",
-          event_label: text.substring(0, 50),
-          link_url: href,
-        });
+        trackCtaClick(text.substring(0, 50), href);
       }
     }
 

@@ -1,11 +1,5 @@
 "use client";
 
-declare global {
-  interface Window {
-    gtag?: (...args: unknown[]) => void;
-  }
-}
-
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import {
   onAuthStateChanged,
@@ -14,6 +8,7 @@ import {
   User,
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
+import { trackSignUp, trackLogin } from "@/lib/tracking";
 
 interface AuthContextType {
   user: User | null;
@@ -39,12 +34,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
-      // Track login event for returning users (session restore)
+      // Session restore — lightweight login event (GA4 only)
       if (user) {
-        window.gtag?.('event', 'login', {
-          method: 'firebase_auto',
-          user_id: user.uid,
-        });
+        trackLogin("firebase_auto");
       }
     });
     return () => unsubscribe();
@@ -52,12 +44,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async () => {
     const result = await signInWithPopup(auth, googleProvider);
-    // Track sign_in event in GA4 for Google Ads conversion
     if (result.user) {
-      window.gtag?.('event', 'sign_in', {
-        method: 'google',
-        user_id: result.user.uid,
-      });
+      // Detect new vs returning user: account created in last 30 seconds = new
+      const creationTime = result.user.metadata.creationTime;
+      const isNewUser = creationTime
+        ? Date.now() - new Date(creationTime).getTime() < 30_000
+        : false;
+
+      if (isNewUser) {
+        trackSignUp("google"); // GA4 + Google Ads conversion
+      } else {
+        trackLogin("google"); // GA4 only
+      }
     }
   };
 

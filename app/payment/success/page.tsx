@@ -4,6 +4,8 @@ import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { personas } from '@/lib/personas';
+import { PLANS, PlanKey } from '@/lib/stripe';
+import { trackPurchase, trackBotTokenSubmitted, trackOpenTelegram } from '@/lib/tracking';
 
 const awakeningTexts: Record<string, string> = {
   'warm-senior': '他正在合上手里的诗集，准备来见你...',
@@ -32,6 +34,8 @@ function AwakeningContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get('session_id');
   const characterParam = searchParams.get('character');
+  const planParam = (searchParams.get('plan') || 'premium') as PlanKey;
+  const planPrice = PLANS[planParam]?.price ?? PLANS.premium.price;
 
   const [agentStatus, setAgentStatus] = useState<AgentStatus>({
     status: 'provisioning',
@@ -73,14 +77,15 @@ function AwakeningContent() {
     }
   }, [sessionId]);
 
-  // Track GA4 purchase
+  // Track purchase — GA4 + Google Ads (with value for ROAS)
   useEffect(() => {
-    window.gtag?.('event', 'purchase', {
-      event_category: 'conversion',
-      transaction_id: sessionId || 'unknown',
-      currency: 'USD',
+    trackPurchase({
+      transactionId: sessionId || 'unknown',
+      value: planPrice,
+      plan: planParam,
+      personaId: characterParam || undefined,
     });
-  }, [sessionId]);
+  }, [sessionId, planPrice, planParam, characterParam]);
 
   // Step animation
   useEffect(() => {
@@ -188,11 +193,7 @@ function AwakeningContent() {
                           setTokenError(data.error || '提交失败，请重试');
                         } else {
                           setShowBotSetup(false);
-                          // GA4: bot token submitted
-                          window.gtag?.('event', 'bot_token_submitted', {
-                            event_category: 'conversion',
-                            event_label: agentStatus.persona || 'unknown',
-                          });
+                          trackBotTokenSubmitted(agentStatus.persona || 'unknown');
                           // Continue polling - provision watcher will pick it up
                         }
                       } catch {
@@ -225,12 +226,7 @@ function AwakeningContent() {
                 href={`https://t.me/${agentStatus.botUsername}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => {
-                  window.gtag?.('event', 'open_telegram_chat', {
-                    event_category: 'conversion',
-                    event_label: agentStatus.persona || 'unknown',
-                  });
-                }}
+                onClick={() => trackOpenTelegram(agentStatus.persona || 'unknown')}
                 className="inline-block w-full sm:w-auto px-10 py-4 rounded-full gradient-bg text-white font-bold text-lg glow glow-hover transition-all"
               >
                 打开 Telegram 开始聊天 💬

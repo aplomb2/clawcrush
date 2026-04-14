@@ -62,7 +62,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* GA4 + gclid tracking for ad ROAS attribution */}
+        {/* GA4 + Google Ads gtag — single loader, dual config */}
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-D3C6CQ0YCW"></script>
         <script
           dangerouslySetInnerHTML={{
@@ -71,6 +71,7 @@ export default function RootLayout({
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
               gtag('config', 'G-D3C6CQ0YCW');
+              gtag('config', 'AW-XXXXXXXXX');
 
               (function() {
                 var params = new URLSearchParams(window.location.search);

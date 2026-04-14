@@ -1,13 +1,8 @@
 'use client';
 
-declare global {
-  interface Window {
-    gtag?: (...args: unknown[]) => void;
-  }
-}
-
 import { useState, useMemo } from 'react';
 import Image from 'next/image';
+import { trackQuizCompleted, trackQuizChoosePersona } from '@/lib/tracking';
 import Link from 'next/link';
 import { personas, type Persona } from '@/lib/personas';
 
@@ -114,11 +109,7 @@ export default function QuizPage() {
       setTimeout(() => {
         setAnalyzing(false);
         setShowResults(true);
-        // GA4: quiz completed
-        window.gtag?.('event', 'quiz_completed', {
-          event_category: 'engagement',
-          event_label: 'personality_quiz',
-        });
+        trackQuizCompleted('personality_quiz');
       }, 3000);
     }
   }
@@ -307,10 +298,7 @@ function ResultCard({ persona, percent, rank }: { persona: Persona; percent: num
         <Link
           href="/dashboard"
           onClick={() => {
-            window.gtag?.('event', 'quiz_choose_persona', {
-              event_category: 'conversion',
-              event_label: persona.id,
-            });
+            trackQuizChoosePersona(persona.id);
           }}
           className="block w-full text-center py-3 rounded-full gradient-bg text-white text-sm font-semibold hover:opacity-90 transition-opacity"
         >

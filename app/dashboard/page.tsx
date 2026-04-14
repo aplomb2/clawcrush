@@ -1,17 +1,17 @@
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-
-declare global {
-  interface Window {
-    gtag?: (...args: unknown[]) => void;
-  }
-}
 import { personas, femalePersonas, malePersonas } from "@/lib/personas";
 import { PLANS, PlanKey } from "@/lib/stripe";
+import {
+  trackSelectPersona,
+  trackBeginCheckout,
+  trackAgentActivated,
+  trackOpenBillingPortal,
+} from "@/lib/tracking";
 
 const PLAN_IMAGE_QUOTA: Record<string, number> = { basic: 0, premium: 30, vip: 100 };
 
@@ -95,9 +95,7 @@ export default function DashboardPage() {
       });
       const data = await res.json();
       if (data.url) {
-        window.gtag?.("event", "open_billing_portal", {
-          event_category: "subscription",
-        });
+        trackOpenBillingPortal();
         window.location.href = data.url;
       } else {
         setError(data.error || "Failed to open billing portal");
@@ -109,23 +107,15 @@ export default function DashboardPage() {
     }
   };
 
-  const trackedSignUp = useRef(false);
-
   useEffect(() => {
     if (user) {
       fetchUserData();
-      // Track sign-up / sign-in as conversion (fire once per session)
-      if (!trackedSignUp.current) {
-        trackedSignUp.current = true;
-        window.gtag?.("event", "sign_up", {
-          event_category: "conversion",
-          method: "google",
-        });
-      }
     }
   }, [user, fetchUserData]);
 
   const startCreateAgent = (boyfriendId: string) => {
+    const persona = personas.find((p) => p.id === boyfriendId);
+    trackSelectPersona(boyfriendId, persona?.name || boyfriendId);
     setSelectedPersona(boyfriendId);
     setSelectedPlan("premium");
     setBotToken("");
@@ -185,12 +175,10 @@ export default function DashboardPage() {
         });
         const checkoutData = await checkoutRes.json();
         if (checkoutData.url) {
-          // Track checkout initiation
-          window.gtag?.("event", "begin_checkout", {
-            event_category: "conversion",
-            event_label: selectedPersona,
+          trackBeginCheckout({
+            plan: selectedPlan,
             value: PLANS[selectedPlan].price,
-            currency: "USD",
+            personaId: selectedPersona,
           });
           window.location.href = checkoutData.url;
         }
@@ -203,12 +191,10 @@ export default function DashboardPage() {
       }
 
       setShowTokenModal(false);
-      // Track agent creation as primary conversion
-      window.gtag?.("event", "agent_created", {
-        event_category: "conversion",
-        event_label: selectedPersona,
+      trackAgentActivated({
+        personaId: selectedPersona,
+        plan: selectedPlan,
         value: PLANS[selectedPlan].price,
-        currency: "USD",
       });
       await fetchUserData();
     } catch (e) {
