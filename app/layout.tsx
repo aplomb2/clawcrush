@@ -71,7 +71,7 @@ export default function RootLayout({
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
               gtag('config', 'G-D3C6CQ0YCW');
-              gtag('config', 'AW-XXXXXXXXX');
+              gtag('config', 'AW-17730884015');
 
               (function() {
                 var params = new URLSearchParams(window.location.search);

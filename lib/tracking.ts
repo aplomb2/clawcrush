@@ -16,14 +16,14 @@ declare global {
 
 // ─── Google Ads Conversion ID ────────────────────────────────────────
 // Replace with your real AW-ID after creating the Google Ads account
-const AW_ID = "AW-XXXXXXXXX";
+const AW_ID = "AW-17730884015";
 
 // ─── Conversion labels (replace after creating in Google Ads UI) ─────
 const LABELS = {
-  sign_up: "TODO_LABEL_SIGN_UP",
-  begin_checkout: "TODO_LABEL_BEGIN_CHECKOUT",
-  purchase: "TODO_LABEL_PURCHASE",
-  agent_activated: "TODO_LABEL_AGENT_ACTIVATED",
+  sign_up: "hBRACKO9p5wcEK-j34ZC",
+  begin_checkout: "mrO4CLaFk5wcEK-j34ZC",
+  purchase: "xPxuCMCDk5wcEK-j34ZC",
+  agent_activated: "qDwOCNGFk5wcEK-j34ZC",
 } as const;
 
 // ─── Helper ──────────────────────────────────────────────────────────
