@@ -9,6 +9,7 @@ import {
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
 import { trackSignUp, trackLogin } from "@/lib/tracking";
+import posthog from "posthog-js";
 
 interface AuthContextType {
   user: User | null;
@@ -34,9 +35,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
-      // Session restore — lightweight login event (GA4 only)
       if (user) {
+        // Session restore — lightweight login event (GA4 only)
         trackLogin("firebase_auto");
+        // Identify the user in PostHog so all subsequent events are attributed
+        posthog.identify(user.uid, {
+          email: user.email || undefined,
+          name: user.displayName || undefined,
+        });
       }
     });
     return () => unsubscribe();
@@ -61,6 +67,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await firebaseSignOut(auth);
+    // Reset PostHog identity so the next visitor isn't attributed to this user
+    posthog.reset();
   };
 
   const getIdToken = async () => {
