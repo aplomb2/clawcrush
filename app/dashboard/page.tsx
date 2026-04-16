@@ -17,6 +17,7 @@ import {
   trackPaywallDismissed,
   trackPurchaseFailed,
   trackChatStarted,
+  trackTelegramLinkClicked,
 } from "@/lib/tracking";
 
 const PLAN_IMAGE_QUOTA: Record<string, number> = { basic: 0, premium: 30, vip: 100 };
@@ -634,6 +635,7 @@ export default function DashboardPage() {
                         href="https://t.me/BotFather"
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={() => trackTelegramLinkClicked("dashboard_token_modal")}
                         className="text-pink-400 hover:underline font-semibold"
                       >
                         @BotFather

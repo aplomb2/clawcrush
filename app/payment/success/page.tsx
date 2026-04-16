@@ -10,6 +10,7 @@ import {
   trackBotTokenSubmitted,
   trackChatStarted,
   trackAgentActivated,
+  trackTelegramLinkClicked,
 } from '@/lib/tracking';
 
 const awakeningTexts: Record<string, string> = {
@@ -179,7 +180,7 @@ function AwakeningContent() {
               <div className="glass rounded-2xl p-6 mt-6 text-left animate-fade-in">
                 <h3 className="font-bold mb-2">🤖 最后一步：连接 Telegram</h3>
                 <p className="text-xs text-[var(--text3)] mb-4">
-                  在 Telegram 搜索 <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" className="text-pink-400">@BotFather</a>，发送 /newbot 创建一个机器人，然后把 token 粘贴到下面：
+                  在 Telegram 搜索 <a href="https://t.me/BotFather" target="_blank" rel="noopener noreferrer" onClick={() => trackTelegramLinkClicked('awakening_page')} className="text-pink-400">@BotFather</a>，发送 /newbot 创建一个机器人，然后把 token 粘贴到下面：
                 </p>
                 <div className="space-y-3">
                   <input
