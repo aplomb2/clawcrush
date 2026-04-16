@@ -5,7 +5,12 @@ import { useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { personas } from '@/lib/personas';
 import { PLANS, PlanKey } from '@/lib/stripe';
-import { trackPurchase, trackBotTokenSubmitted, trackOpenTelegram } from '@/lib/tracking';
+import {
+  trackPurchaseCompleted,
+  trackBotTokenSubmitted,
+  trackChatStarted,
+  trackAgentActivated,
+} from '@/lib/tracking';
 
 const awakeningTexts: Record<string, string> = {
   'warm-senior': '他正在合上手里的诗集，准备来见你...',
@@ -77,15 +82,27 @@ function AwakeningContent() {
     }
   }, [sessionId]);
 
-  // Track purchase — GA4 + Google Ads (with value for ROAS)
+  // Track purchase — three-track (PostHog + GA4 + Google Ads)
   useEffect(() => {
-    trackPurchase({
-      transactionId: sessionId || 'unknown',
-      value: planPrice,
+    trackPurchaseCompleted({
+      orderId: sessionId || 'unknown',
       plan: planParam,
-      personaId: characterParam || undefined,
+      planPriceUsd: planPrice,
+      companionId: characterParam || undefined,
     });
   }, [sessionId, planPrice, planParam, characterParam]);
+
+  // Fire agent_activated when status flips to active
+  useEffect(() => {
+    if (agentStatus.status === 'active' && agentStatus.agentId) {
+      trackAgentActivated({
+        companionId: agentStatus.persona || characterParam || 'unknown',
+        plan: planParam,
+        value: planPrice,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agentStatus.status, agentStatus.agentId]);
 
   // Step animation
   useEffect(() => {
@@ -226,7 +243,13 @@ function AwakeningContent() {
                 href={`https://t.me/${agentStatus.botUsername}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => trackOpenTelegram(agentStatus.persona || 'unknown')}
+                onClick={() =>
+                  trackChatStarted({
+                    companionId: agentStatus.persona || characterParam || 'unknown',
+                    isLoggedIn: true,
+                    source: 'awakening_page',
+                  })
+                }
                 className="inline-block w-full sm:w-auto px-10 py-4 rounded-full gradient-bg text-white font-bold text-lg glow glow-hover transition-all"
               >
                 打开 Telegram 开始聊天 💬

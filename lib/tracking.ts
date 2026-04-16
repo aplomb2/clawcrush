@@ -1,12 +1,18 @@
 /**
- * Unified conversion tracking — fires both GA4 and Google Ads events.
+ * Unified conversion tracking — three-track fan-out:
+ *   1. PostHog   (product analytics, autocapture + manual events)
+ *   2. GA4       (event telemetry, linked to Google Ads)
+ *   3. Google Ads (explicit conversion pixels for bidding)
  *
- * Google Ads conversion labels are placeholders (TODO_LABEL_xxx).
- * After creating conversions in Google Ads UI, replace them with real labels.
+ * Event names follow the ClawCrush schema. Each helper below fires
+ * the right subset of the three channels for its event type.
  *
- * GA4 Measurement ID : G-D3C6CQ0YCW
- * Google Ads ID      : AW-XXXXXXXXX  ← replace in layout.tsx
+ * Identifiers:
+ *   GA4 Measurement ID : G-D3C6CQ0YCW          (app/layout.tsx)
+ *   Google Ads ID      : AW-17730884015        (app/layout.tsx)
  */
+
+import posthog from "posthog-js";
 
 declare global {
   interface Window {
@@ -14,11 +20,9 @@ declare global {
   }
 }
 
-// ─── Google Ads Conversion ID ────────────────────────────────────────
-// Replace with your real AW-ID after creating the Google Ads account
+// ─── Google Ads conversion labels ────────────────────────────────────
 const AW_ID = "AW-17730884015";
 
-// ─── Conversion labels (replace after creating in Google Ads UI) ─────
 const LABELS = {
   sign_up: "hBRACKO9p5wcEK-j34ZC",
   begin_checkout: "mrO4CLaFk5wcEK-j34ZC",
@@ -26,149 +30,259 @@ const LABELS = {
   agent_activated: "qDwOCNGFk5wcEK-j34ZC",
 } as const;
 
-// ─── Helper ──────────────────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────────
 
-function gadsConversion(
-  label: string,
-  params?: Record<string, unknown>,
-) {
+function gadsConversion(label: string, params?: Record<string, unknown>) {
   window.gtag?.("event", "conversion", {
     send_to: `${AW_ID}/${label}`,
     ...params,
   });
 }
 
-// ─── Public API ──────────────────────────────────────────────────────
+function ph(event: string, props?: Record<string, unknown>) {
+  // posthog-js is a no-op on server-side and before init
+  if (typeof window !== "undefined") posthog.capture(event, props);
+}
 
-/** New user signs up (first-time Google OAuth). Primary conversion. */
-export function trackSignUp(method = "google") {
-  // GA4
-  window.gtag?.("event", "sign_up", {
-    method,
+function ga(event: string, props?: Record<string, unknown>) {
+  window.gtag?.("event", event, props);
+}
+
+// ─── Acquisition / Onboarding funnel ─────────────────────────────────
+
+/** Main CTA on landing page clicked. */
+export function trackCtaClick(ctaName: string, page: string, url?: string) {
+  ph("cta_clicked", { cta_name: ctaName, page, url });
+  ga("cta_click", {
+    event_category: "engagement",
+    event_label: ctaName,
+    link_url: url,
   });
-  // Google Ads
+}
+
+/** User clicked a companion card (persona tile). */
+export function trackCompanionCardClicked(params: {
+  companionId: string;
+  companionName: string;
+  category: "gf" | "bf";
+  position?: number;
+  page?: string;
+}) {
+  ph("companion_card_clicked", {
+    companion_id: params.companionId,
+    companion_name: params.companionName,
+    category: params.category,
+    position: params.position,
+    page: params.page,
+  });
+  ga("select_persona", {
+    event_category: "engagement",
+    persona_id: params.companionId,
+    persona_name: params.companionName,
+  });
+}
+
+/** User enters a companion detail / setup screen (dashboard modal etc.). */
+export function trackCompanionViewed(companionId: string, companionName: string) {
+  ph("companion_viewed", {
+    companion_id: companionId,
+    companion_name: companionName,
+  });
+}
+
+/** User clicked a Telegram entry (open link, share etc.). */
+export function trackTelegramLinkClicked(sourcePage: string) {
+  ph("telegram_link_clicked", { source_page: sourcePage });
+}
+
+/** Sign-in modal / screen shown. */
+export function trackLoginPrompted(
+  trigger: "start_chat" | "manual" | "paywall" | "dashboard",
+) {
+  ph("login_prompted", { trigger });
+}
+
+/** New user finishes Google OAuth. Fires Google Ads conversion. */
+export function trackSignedUp(method = "google") {
+  ph("signed_up", { method, is_new_user: true });
+  ga("sign_up", { method });
   gadsConversion(LABELS.sign_up);
 }
 
-/** Returning user logs in (session restore or re-auth). GA4 only. */
-export function trackLogin(method = "google") {
-  window.gtag?.("event", "login", { method });
+/** Returning user finishes auth (popup or session restore). */
+export function trackSignedIn(method = "google") {
+  ph("signed_in", { method, is_new_user: false });
+  ga("login", { method });
 }
 
-/** User clicks "Choose [persona]" — micro-conversion / intent signal. GA4 only. */
-export function trackSelectPersona(personaId: string, personaName: string) {
-  window.gtag?.("event", "select_persona", {
+/** Auth failure (user cancelled popup, network error, etc.). */
+export function trackLoginFailed(errorType: string) {
+  ph("login_failed", { error_type: errorType });
+  ga("login_failed", { event_category: "auth", error_type: errorType });
+}
+
+// ─── Chat / Activation funnel ────────────────────────────────────────
+
+/** User opened the Telegram chat (the "chat start" event on our side). */
+export function trackChatStarted(params: {
+  companionId: string;
+  isLoggedIn: boolean;
+  source?: string;
+}) {
+  ph("chat_started", {
+    companion_id: params.companionId,
+    is_logged_in: params.isLoggedIn,
+    source: params.source,
+  });
+  ga("open_telegram_chat", {
     event_category: "engagement",
-    persona_id: personaId,
-    persona_name: personaName,
+    event_label: params.companionId,
   });
 }
 
-/** Stripe checkout initiated. */
-export function trackBeginCheckout(params: {
-  plan: string;
-  value: number;
-  personaId: string;
-}) {
-  // GA4 (enhanced ecommerce)
-  window.gtag?.("event", "begin_checkout", {
-    currency: "USD",
-    value: params.value,
-    items: [{ item_name: params.plan, price: params.value }],
-  });
-  // Google Ads
-  gadsConversion(LABELS.begin_checkout, {
-    value: params.value,
-    currency: "USD",
-  });
-}
-
-/** Payment completed — the key ROAS event. Must include value. */
-export function trackPurchase(params: {
-  transactionId: string;
-  value: number;
-  plan: string;
-  personaId?: string;
-}) {
-  // GA4 (enhanced ecommerce)
-  window.gtag?.("event", "purchase", {
-    transaction_id: params.transactionId,
-    currency: "USD",
-    value: params.value,
-    items: [{ item_name: params.plan, price: params.value }],
-  });
-  // Google Ads — primary conversion for tROAS bidding
-  gadsConversion(LABELS.purchase, {
-    value: params.value,
-    currency: "USD",
-    transaction_id: params.transactionId,
-  });
-}
-
-/** Agent is active and Telegram link ready. Final funnel step. */
+/**
+ * Agent fully activated — the core conversion signal on our side.
+ * Fires on all three channels (PostHog + GA4 + Google Ads).
+ *
+ * Note: message-level events (first_message_sent, message_sent,
+ * message_send_failed) happen inside Telegram and must be emitted
+ * from Angela (OpenClaw) — they cannot be captured from the website.
+ */
 export function trackAgentActivated(params: {
-  personaId: string;
+  companionId: string;
   plan: string;
   value: number;
+  messagesExchanged?: number;
 }) {
-  // GA4
-  window.gtag?.("event", "agent_activated", {
+  ph("agent_activated", {
+    companion_id: params.companionId,
+    plan: params.plan,
+    value: params.value,
+    messages_exchanged: params.messagesExchanged,
+  });
+  ga("agent_activated", {
     event_category: "conversion",
-    event_label: params.personaId,
+    event_label: params.companionId,
     value: params.value,
     currency: "USD",
   });
-  // Google Ads
   gadsConversion(LABELS.agent_activated, {
     value: params.value,
     currency: "USD",
   });
 }
 
-/** User submits Telegram bot token. GA4 only (engagement). */
-export function trackBotTokenSubmitted(personaId: string) {
-  window.gtag?.("event", "bot_token_submitted", {
+/** User submits Telegram bot token. */
+export function trackBotTokenSubmitted(companionId: string) {
+  ph("bot_token_submitted", { companion_id: companionId });
+  ga("bot_token_submitted", {
     event_category: "engagement",
-    event_label: personaId,
+    event_label: companionId,
   });
 }
 
-/** User clicks "Open Telegram" link. GA4 only (engagement). */
-export function trackOpenTelegram(personaId: string) {
-  window.gtag?.("event", "open_telegram_chat", {
-    event_category: "engagement",
-    event_label: personaId,
+// ─── Paywall / Payment funnel ────────────────────────────────────────
+
+/** Paywall modal / redirect triggered. */
+export function trackPaywallShown(params: {
+  trigger: "free_messages_used" | "vip_feature" | "plan_selector" | "checkout";
+  messagesSentSoFar?: number;
+  companionId?: string;
+}) {
+  ph("paywall_shown", {
+    trigger: params.trigger,
+    messages_sent_so_far: params.messagesSentSoFar,
+    companion_id: params.companionId,
   });
 }
 
-/** CTA click on landing page. GA4 only. */
-export function trackCtaClick(label: string, url: string) {
-  window.gtag?.("event", "cta_click", {
-    event_category: "engagement",
-    event_label: label,
-    link_url: url,
+/** User closed / bailed out of the paywall. */
+export function trackPaywallDismissed(params: {
+  trigger: string;
+  timeOnPaywallSec: number;
+}) {
+  ph("paywall_dismissed", {
+    trigger: params.trigger,
+    time_on_paywall_sec: params.timeOnPaywallSec,
   });
 }
 
-/** Billing portal opened. GA4 only. */
+/** User kicked off Stripe checkout. Fires Google Ads conversion. */
+export function trackCheckoutStarted(params: {
+  plan: string;
+  planPriceUsd: number;
+  companionId?: string;
+}) {
+  ph("checkout_started", {
+    plan_name: params.plan,
+    plan_price_usd: params.planPriceUsd,
+    companion_id: params.companionId,
+  });
+  ga("begin_checkout", {
+    currency: "USD",
+    value: params.planPriceUsd,
+    items: [{ item_name: params.plan, price: params.planPriceUsd }],
+  });
+  gadsConversion(LABELS.begin_checkout, {
+    value: params.planPriceUsd,
+    currency: "USD",
+  });
+}
+
+/** Payment success. The ROAS-bearing conversion event. */
+export function trackPurchaseCompleted(params: {
+  orderId: string;
+  plan: string;
+  planPriceUsd: number;
+  companionId?: string;
+}) {
+  ph("purchase_completed", {
+    order_id: params.orderId,
+    plan_name: params.plan,
+    plan_price_usd: params.planPriceUsd,
+    companion_id: params.companionId,
+  });
+  ga("purchase", {
+    transaction_id: params.orderId,
+    currency: "USD",
+    value: params.planPriceUsd,
+    items: [{ item_name: params.plan, price: params.planPriceUsd }],
+  });
+  gadsConversion(LABELS.purchase, {
+    value: params.planPriceUsd,
+    currency: "USD",
+    transaction_id: params.orderId,
+  });
+}
+
+/** Payment failed / checkout session couldn't be created. */
+export function trackPurchaseFailed(reason: string, plan?: string) {
+  ph("purchase_failed", { reason, plan_name: plan });
+  ga("purchase_failed", {
+    event_category: "conversion",
+    reason,
+  });
+}
+
+// ─── Misc existing events (kept for back-compat) ─────────────────────
+
 export function trackOpenBillingPortal() {
-  window.gtag?.("event", "open_billing_portal", {
-    event_category: "subscription",
-  });
+  ph("billing_portal_opened");
+  ga("open_billing_portal", { event_category: "subscription" });
 }
 
-/** Quiz completed. GA4 only. */
 export function trackQuizCompleted(result: string) {
-  window.gtag?.("event", "quiz_completed", {
+  ph("quiz_completed", { result });
+  ga("quiz_completed", {
     event_category: "engagement",
     event_label: result,
   });
 }
 
-/** Quiz → choose persona. GA4 only. */
-export function trackQuizChoosePersona(personaId: string) {
-  window.gtag?.("event", "quiz_choose_persona", {
+export function trackQuizChoosePersona(companionId: string) {
+  ph("quiz_choose_persona", { companion_id: companionId });
+  ga("quiz_choose_persona", {
     event_category: "conversion",
-    event_label: personaId,
+    event_label: companionId,
   });
 }

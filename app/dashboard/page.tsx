@@ -7,10 +7,16 @@ import Image from "next/image";
 import { personas, femalePersonas, malePersonas } from "@/lib/personas";
 import { PLANS, PlanKey } from "@/lib/stripe";
 import {
-  trackSelectPersona,
-  trackBeginCheckout,
+  trackCompanionCardClicked,
+  trackCompanionViewed,
+  trackCheckoutStarted,
   trackAgentActivated,
   trackOpenBillingPortal,
+  trackLoginPrompted,
+  trackPaywallShown,
+  trackPaywallDismissed,
+  trackPurchaseFailed,
+  trackChatStarted,
 } from "@/lib/tracking";
 
 const PLAN_IMAGE_QUOTA: Record<string, number> = { basic: 0, premium: 30, vip: 100 };
@@ -56,6 +62,7 @@ export default function DashboardPage() {
   const [botToken, setBotToken] = useState("");
   const [botTokenError, setBotTokenError] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<PlanKey>("premium");
+  const [paywallShownAt, setPaywallShownAt] = useState<number | null>(null);
   const [subscription, setSubscription] = useState<SubscriptionInfo | null>(null);
   const [loadingPortal, setLoadingPortal] = useState(false);
 
@@ -113,14 +120,50 @@ export default function DashboardPage() {
     }
   }, [user, fetchUserData]);
 
+  useEffect(() => {
+    // Fire login_prompted once when the sign-in screen becomes visible
+    if (!loading && !user) {
+      trackLoginPrompted("dashboard");
+    }
+  }, [loading, user]);
+
   const startCreateAgent = (boyfriendId: string) => {
     const persona = personas.find((p) => p.id === boyfriendId);
-    trackSelectPersona(boyfriendId, persona?.name || boyfriendId);
+    const list = genderTab === "female" ? femalePersonas : malePersonas;
+    const position = list.findIndex((p) => p.id === boyfriendId);
+
+    trackCompanionCardClicked({
+      companionId: boyfriendId,
+      companionName: persona?.name || boyfriendId,
+      category: genderTab === "female" ? "gf" : "bf",
+      position: position >= 0 ? position : undefined,
+      page: "dashboard",
+    });
+    trackCompanionViewed(boyfriendId, persona?.name || boyfriendId);
+
     setSelectedPersona(boyfriendId);
     setSelectedPlan("premium");
     setBotToken("");
     setBotTokenError("");
     setShowTokenModal(true);
+
+    // The token modal contains the plan selector = paywall
+    trackPaywallShown({
+      trigger: "plan_selector",
+      companionId: boyfriendId,
+    });
+    setPaywallShownAt(Date.now());
+  };
+
+  const closeTokenModal = () => {
+    if (paywallShownAt) {
+      trackPaywallDismissed({
+        trigger: "plan_selector",
+        timeOnPaywallSec: Math.round((Date.now() - paywallShownAt) / 1000),
+      });
+    }
+    setPaywallShownAt(null);
+    setShowTokenModal(false);
   };
 
   const validateBotToken = (token: string) => {
@@ -162,6 +205,11 @@ export default function DashboardPage() {
       const data = await res.json();
 
       if (data.requirePayment) {
+        trackPaywallShown({
+          trigger: "plan_selector",
+          companionId: selectedPersona,
+        });
+
         const checkoutRes = await fetch("/api/checkout", {
           method: "POST",
           headers: {
@@ -175,12 +223,18 @@ export default function DashboardPage() {
         });
         const checkoutData = await checkoutRes.json();
         if (checkoutData.url) {
-          trackBeginCheckout({
+          trackCheckoutStarted({
             plan: selectedPlan,
-            value: PLANS[selectedPlan].price,
-            personaId: selectedPersona,
+            planPriceUsd: PLANS[selectedPlan].price,
+            companionId: selectedPersona,
           });
           window.location.href = checkoutData.url;
+        } else {
+          trackPurchaseFailed(
+            checkoutData.error || "checkout_url_missing",
+            selectedPlan,
+          );
+          setError(checkoutData.error || "Failed to start checkout");
         }
         return;
       }
@@ -191,8 +245,9 @@ export default function DashboardPage() {
       }
 
       setShowTokenModal(false);
+      setPaywallShownAt(null);
       trackAgentActivated({
-        personaId: selectedPersona,
+        companionId: selectedPersona,
         plan: selectedPlan,
         value: PLANS[selectedPlan].price,
       });
@@ -360,6 +415,13 @@ export default function DashboardPage() {
                         href={agent.telegramBotLink}
                         target="_blank"
                         rel="noopener noreferrer"
+                        onClick={() =>
+                          trackChatStarted({
+                            companionId: agent.boyfriendId,
+                            isLoggedIn: true,
+                            source: "dashboard",
+                          })
+                        }
                         className="block w-full text-center py-2.5 rounded-full gradient-bg text-white text-sm font-semibold hover:opacity-90 transition-opacity"
                       >
                         💬 Chat on Telegram
@@ -547,7 +609,7 @@ export default function DashboardPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
             <div className="glass rounded-2xl p-6 max-w-lg w-full relative">
               <button
-                onClick={() => setShowTokenModal(false)}
+                onClick={closeTokenModal}
                 className="absolute top-4 right-4 text-[var(--text3)] hover:text-white text-xl"
               >
                 ✕

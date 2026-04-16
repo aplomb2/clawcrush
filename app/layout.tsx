@@ -79,7 +79,14 @@ export default function RootLayout({
                 var gclid = params.get('gclid');
                 if (gclid) {
                   document.cookie = '_gcl_aw=' + gclid + ';max-age=' + (90*86400) + ';path=/;SameSite=Lax';
-                  try { localStorage.setItem('gclid', gclid); localStorage.setItem('gclid_ts', Date.now()); } catch(e) {}
+                  try {
+                    // New canonical key for ClawCrush
+                    localStorage.setItem('cc_gclid', gclid);
+                    localStorage.setItem('cc_gclid_ts', Date.now());
+                    // Backward-compat for older code paths
+                    localStorage.setItem('gclid', gclid);
+                    localStorage.setItem('gclid_ts', Date.now());
+                  } catch(e) {}
                 }
                 ['utm_source','utm_medium','utm_campaign','utm_term','utm_content'].forEach(function(p) {
                   var v = params.get(p);

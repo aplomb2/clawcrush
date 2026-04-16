@@ -15,6 +15,20 @@ if (typeof window !== "undefined" && !posthog.__loaded) {
     capture_pageleave: true,
     persistence: "localStorage+cookie",
   });
+
+  // Attach ad-attribution params as super properties so every event carries them
+  try {
+    const attribution: Record<string, string> = {};
+    const gclid = localStorage.getItem("cc_gclid") || localStorage.getItem("gclid");
+    if (gclid) attribution.cc_gclid = gclid;
+    ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"].forEach((k) => {
+      const v = localStorage.getItem(k);
+      if (v) attribution[k] = v;
+    });
+    if (Object.keys(attribution).length) posthog.register(attribution);
+  } catch {
+    // localStorage unavailable (private browsing etc.) — ignore
+  }
 }
 
 function PostHogPageView() {

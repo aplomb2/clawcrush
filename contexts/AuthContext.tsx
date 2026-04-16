@@ -8,7 +8,7 @@ import {
   User,
 } from "firebase/auth";
 import { auth, googleProvider } from "@/lib/firebase";
-import { trackSignUp, trackLogin } from "@/lib/tracking";
+import { trackSignedUp, trackSignedIn, trackLoginFailed } from "@/lib/tracking";
 import posthog from "posthog-js";
 
 interface AuthContextType {
@@ -27,6 +27,14 @@ const AuthContext = createContext<AuthContextType>({
   getIdToken: async () => null,
 });
 
+function identify(user: User, isNewUser: boolean) {
+  posthog.identify(user.uid, {
+    email: user.email || undefined,
+    name: user.displayName || undefined,
+    is_new_user: isNewUser,
+  });
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -36,38 +44,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(user);
       setLoading(false);
       if (user) {
-        // Session restore — lightweight login event (GA4 only)
-        trackLogin("firebase_auto");
-        // Identify the user in PostHog so all subsequent events are attributed
-        posthog.identify(user.uid, {
-          email: user.email || undefined,
-          name: user.displayName || undefined,
-        });
+        // Session restore — identify but do NOT fire signed_in
+        // (the signInWithGoogle branch handles explicit auth events).
+        identify(user, false);
       }
     });
     return () => unsubscribe();
   }, []);
 
   const signInWithGoogle = async () => {
-    const result = await signInWithPopup(auth, googleProvider);
-    if (result.user) {
-      // Detect new vs returning user: account created in last 30 seconds = new
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      if (!result.user) return;
+
+      // New vs returning: accounts created <30s ago are brand new
       const creationTime = result.user.metadata.creationTime;
       const isNewUser = creationTime
         ? Date.now() - new Date(creationTime).getTime() < 30_000
         : false;
 
+      identify(result.user, isNewUser);
+
       if (isNewUser) {
-        trackSignUp("google"); // GA4 + Google Ads conversion
+        trackSignedUp("google"); // PostHog + GA4 + Google Ads conversion
       } else {
-        trackLogin("google"); // GA4 only
+        trackSignedIn("google"); // PostHog + GA4
       }
+    } catch (err) {
+      const code =
+        err && typeof err === "object" && "code" in err
+          ? String((err as { code: unknown }).code)
+          : "unknown";
+      trackLoginFailed(code);
     }
   };
 
   const signOut = async () => {
     await firebaseSignOut(auth);
-    // Reset PostHog identity so the next visitor isn't attributed to this user
     posthog.reset();
   };
 
