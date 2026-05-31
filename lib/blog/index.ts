@@ -6,6 +6,11 @@ import html from "remark-html";
 
 const contentDir = path.join(process.cwd(), "content/blog");
 
+export interface FaqItem {
+  q: string;
+  a: string;
+}
+
 export interface BlogPost {
   slug: string;
   title: string;
@@ -13,6 +18,7 @@ export interface BlogPost {
   date: string;
   author: string;
   keywords: string[];
+  faq?: FaqItem[];
   content: string;
   htmlContent?: string;
 }
@@ -50,6 +56,7 @@ export async function getPost(slug: string): Promise<BlogPost | null> {
     date: data.date || "",
     author: data.author || "ClawCrush Team",
     keywords: data.keywords || [],
+    faq: data.faq || undefined,
     content,
     htmlContent: result.toString(),
   };
